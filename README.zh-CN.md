@@ -51,7 +51,6 @@ Herdr 不会更新别人做的 mod 和布局。再添加一次也不行：安装
 - `t3-chrome`：每分钟检查一次，用 `hc ls/get/label/kill` 释放符合条件的 Pi 树，用 `hc rm` 清理标签已关闭的释放记录。结束父进程前复查整棵树，再清理仍存活的子进程。
 - `t3-released`：保留窗格，用 `hc read` 显示最后的输出；打开时启动 `pi --session <保存的文件>`，确认 Pi 已上报同一会话后才移除旧 Core 记录。接回期间用一个短命 Node.js 进程占用 Core 唯一名称，防止两个客户端同时启动同一 Pi；完成后清理，客户端退出后最多一分钟自动失效。失败时保留会话和 Retry 按钮。启动 Pi 也会加载你平常的 Pi 扩展和设置。
 - `t3-new-menu`：向 Herdr 查询装了哪些 agent（`knownAgents`）。
-- `t3-tabs`：读取可选 pulls.review 扩展的元数据，监听 mods 目录里的安装和卸载。
 
 不发网络请求。
 
@@ -69,12 +68,11 @@ Herdr 不会更新别人做的 mod 和布局。再添加一次也不行：安装
 
 `extras/mods/pulls-review/` 在 [pulls.review](https://github.com/antfu/pulls.review) 里打开当前窗格所在的仓库：有未提交改动时看这些改动，否则打开 pulls.review 的默认页面（当前分支对比默认分支）。
 
-- **需要[我的 fork](https://github.com/JinJieBeWater/pulls.review/tree/multi-repo) 里的 CLI**（`multi-repo` 分支）。这个 mod 运行 `pulls.review -d`：`-d` 把仓库交给一个所有仓库共用的后台服务。上游 pulls.review 没有后台服务模式。
+- **需要[我的 fork](https://github.com/JinJieBeWater/pulls.review/tree/multi-repo) 里的 CLI**（`multi-repo` 分支）。这个 mod 运行 `pulls.review -d --pwa`：`-d` 把仓库交给一个所有仓库共用的后台服务，`--pwa` 打开已安装的 pulls.review 应用，而不是浏览器标签页。上游 pulls.review 没有这两个参数。
 - 只支持本机目录：窗格在其他机器上时会报错。
-- 安装：把 `extras/mods/pulls-review/` 复制进 `~/.config/herdr-app/mods/`。`+` 旁边会出现评审按钮；卸载扩展后按钮隐藏，不用重启。
-- 默认用浏览器打开。点按钮旁的小箭头，可以选择 **Browser** 或 **Installed app (PWA)**；先安装应用再选 PWA，这时才加 `--pwa`。选择会记住，按钮和快捷键共用。
-- 可选快捷键：在 `keys.json` 的 `global` 里添加 `"cmd-shift-r": "mod.open:pulls-review"`。
+- 安装：把 `extras/mods/pulls-review/` 复制进 `~/.config/herdr-app/mods/`，再在 `keys.json` 的 `global` 里加一个快捷键：`"cmd-shift-r": "mod.open:pulls-review"`。
 - 会运行只读的 `git status --porcelain` 和 `pulls.review`。
+- 本布局的标签栏没有对应按钮，用快捷键或命令面板打开。
 
 ### 预览图里的主题和设置
 

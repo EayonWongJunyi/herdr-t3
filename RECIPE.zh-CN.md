@@ -23,7 +23,6 @@ Herdr App 的一个安静、近似 T3 Code 的窗口：左侧 268px 侧栏，可
     - **Agent 模式**：一个 agent 的终端铺满显示，`background` 填充，圆角 8，无标题栏。
   - 底部留 6px；布局里有自带的 `workspace-status` 状态栏，但隐藏。
 - **新建菜单**（`t3-new-menu`，520×420 弹层，位于顶部）：先选 space（或 New space），再选在那里启动什么：终端或任一已安装的 agent；`⌘1…` 按编号选 space。
-- **可选评审入口**：安装 `pulls-review` 后，`+` 旁出现 26px 评审按钮和 20px 小箭头。按钮打开当前仓库；箭头可选 Browser（默认）或 Installed app (PWA)，按钮和快捷键共用记住的选择。没装扩展时两个控件都隐藏。
 
 ## 它怎么表现
 
@@ -49,7 +48,6 @@ Herdr App 的一个安静、近似 T3 Code 的窗口：左侧 268px 侧栏，可
 - `t3-chrome/release.js` 每分钟在本布局检查一次，用 `hc ls/get/label/kill/rm` 保存并结束 Pi 树，清理标签关闭后的旧记录。`t3-released` 读取最后的输出，在保存的位置执行 `pane.split {argv:["pi","--session",file]}`。等新 Pi 上报完全相同的 `pi.session_file` 才移除旧 Core 记录和占位；保留 Settle 时间，轮次改用新终端的计数。失败时保留恢复信息并提供 Retry。
 - `scripts/sync.sh` 将 `mods/t3-focus/released.js` 复制到列表、品牌栏和占位 mod。释放记录保存在共享状态 `t3.released`、占位 props 和 Core 的 `t3.resume`、`t3.released`、`t3.record` 标签中；共享记录保存实际占位 pane id。置顶以机器和 Pi 会话路径识别，接回换地址后仍有效。独立侧栏不运行释放循环。
 - 接回前通过 `hc run --rm --no-parent --no-notify --bg --name … -- node -e 'setTimeout(()=>{},60000)'` 占用 Core 唯一的 live 名称 `t3-resume-<旧id>`。竞争失败的客户端等待并复用 replacement 标签，成功的一方在 `finally` 清理占用。按当前屏幕的 space UUID 和 machine 转换保存的 id 后再查询 Core，props 本身不带机器前缀转换。启动中的查询只走一秒定时器，不从 render 发起。
-- 可选评审：`t3-tabs` 用 `readTextFile` 读取 `mods/pulls-review/mod.json`，用 `watchFolder` 监听 mods 目录。按钮执行 `mod.open`；箭头把该 mod 作为 260×132 弹层打开，props 为 `{ configure: true }`。扩展把打开偏好存进共享状态 `pulls-review.pwa`，仅在 true 时添加 `--pwa`。
 
 ## 注意
 
@@ -72,4 +70,3 @@ Herdr App 的一个安静、近似 T3 Code 的窗口：左侧 268px 侧栏，可
 - 在 Focus 里 Settle 一个已结束的 agent，它移入 Settled，标签上的完成圆点消失；再给它发提示，它回来。
 - `node mods/t3-chrome/check-release.cjs` 通过。临时 Pi 的 Settle 满 30 分钟后释放，标签仍在；打开后只启动一个保留原对话的父 Pi，子 agent 继续保持已释放。kill 前出现工作中的子、新轮次、新子、置顶、打开标签或切布局，均取消释放。接回启动失败时旧记录保留，可以重试。
 - worktree space 折叠显示在它的 checkout 下；远程机器有自己的分组标题。
-- 安装或卸载可选的 `pulls-review` mod 后，评审控件随之显示或隐藏，不用重启。`node extras/mods/pulls-review/check-launch.cjs` 验证浏览器默认、记住的 PWA 选择和启动校验。

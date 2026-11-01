@@ -21,7 +21,6 @@ Left to right, divider 1px `border`:
     - **Agent view**: one agent's terminal full size, `background` fill, radius 8, no header.
   - 6px bottom inset; the shipped `workspace-status` bar is in the layout but hidden.
 - **New menu** (`t3-new-menu`, popup 520×420 at the top): first pick a space (or New space), then what to start there: a terminal or each installed agent; `⌘1…` pick spaces by number.
-- **Optional review entry**: when `pulls-review` is installed, a 26px review button and 20px arrow appear beside `+`. The button opens the focused repository; the arrow offers Browser (default) or Installed app (PWA), remembered for buttons and shortcuts. Without the extension, both controls stay hidden.
 
 ## How it behaves
 
@@ -47,7 +46,6 @@ Left to right, divider 1px `border`:
 - `t3-chrome/release.js` checks once a minute in this layout; `hc ls/get/label/kill/rm` saves and ends Pi trees and cleans records after their tabs close. `t3-released` reads the last output and uses `pane.split {argv:["pi","--session",file]}` at its saved position. Wait for the new Pi's exact `pi.session_file` before removing the old core record and placeholder. Preserve the Settle time, but use the new terminal's turn counter. Failures leave the session recoverable and offer Retry.
 - `mods/t3-focus/released.js` is copied to the lists, chrome and placeholder by `scripts/sync.sh`. Saved records live in shared `t3.released`, placeholder props and core labels `t3.resume`, `t3.released`, `t3.record`; the shared record has the actual placeholder pane id. Pins use the machine and Pi session path so reconnecting doesn't lose them. The standalone sidebar never runs the release loop.
 - Reconnection claims a Core-unique live name `t3-resume-<old-id>` using `hc run --rm --no-parent --no-notify --bg --name … -- node -e 'setTimeout(()=>{},60000)'`. Losing clients wait and reuse the replacement label; the winner removes the claim in `finally`. Rebase saved ids using the current screen's space UUID and machine before querying Core; props themselves are not machine-qualified. Startup polling runs on the one-second timer, never from render.
-- Optional review: `t3-tabs` reads `mods/pulls-review/mod.json` with `readTextFile` and watches the mods folder with `watchFolder`. It launches with `mod.open`; the arrow opens that mod as a 260×132 popup with `{ configure: true }`. The extension stores its opening preference in shared `pulls-review.pwa` and adds `--pwa` only when true.
 
 ## Watch out
 
@@ -70,4 +68,3 @@ Left to right, divider 1px `border`:
 - Settling a finished agent in Focus moves it to Settled and removes its done dot from the tab; prompting it again brings it back.
 - `node mods/t3-chrome/check-release.cjs` passes. A temporary Pi settled for 30 minutes releases without losing its tab; opening it starts one replacement with the same conversation, while the children stay released. A working child, changed turn, new child, pin, opened tab or layout switch before kill cancels release. Failed startup keeps the old record and permits Retry.
 - A worktree space appears folded under its checkout; a remote machine gets its own header.
-- Installing or removing the optional `pulls-review` mod shows or hides the review controls without restarting. `node extras/mods/pulls-review/check-launch.cjs` checks the browser default, saved PWA choice and launch validation.

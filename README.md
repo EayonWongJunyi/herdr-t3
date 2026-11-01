@@ -51,7 +51,6 @@ Herdr doesn't update mods or layouts from others, and adding this again would in
 - `t3-chrome`: checks once a minute; uses `hc ls/get/label/kill` to release eligible Pi trees, and `hc rm` to remove released records whose tabs were closed. It checks the whole tree again before ending the parent, then ends surviving children.
 - `t3-released`: keeps the pane and last terminal output (`hc read`); starts `pi --session <saved-file>` when opened, and removes the old core record only after Pi reports that exact session. A short-lived Node.js process holds a Core-unique name during reconnection, so two clients cannot launch the same saved Pi at once; it is removed on completion and expires after a minute if the client exits. An error keeps the saved session and a Retry button. Launching Pi also loads your normal Pi extensions and settings.
 - `t3-new-menu`: asks Herdr which agents are installed (`knownAgents`).
-- `t3-tabs`: reads the optional pulls.review mod's metadata and watches the mods folder for its installation or removal.
 
 No network requests.
 
@@ -69,12 +68,11 @@ Not part of the layout and not copied by an install; add them by hand if you wan
 
 `extras/mods/pulls-review/` opens the focused pane's repository in [pulls.review](https://github.com/antfu/pulls.review): its uncommitted changes when there are any, else what pulls.review opens by default (the current branch against the default branch).
 
-- **Needs the CLI from [my fork](https://github.com/JinJieBeWater/pulls.review/tree/multi-repo)** (`multi-repo` branch). The mod runs `pulls.review -d`: `-d` hands the repo to one background server shared by every repo. Upstream pulls.review has no daemon mode.
+- **Needs the CLI from [my fork](https://github.com/JinJieBeWater/pulls.review/tree/multi-repo)** (`multi-repo` branch). The mod runs `pulls.review -d --pwa`: `-d` hands the repo to one background server shared by every repo, `--pwa` opens the installed pulls.review app instead of a browser tab. Upstream pulls.review has neither flag.
 - Local folders only: a pane on another machine shows an error.
-- Install: copy `extras/mods/pulls-review/` into `~/.config/herdr-app/mods/`. A review button appears beside `+`; removing the extension hides it again. No restart needed.
-- Reviews open in your browser by default. Use the button's small arrow to choose **Browser** or **Installed app (PWA)**. Install the app before choosing PWA; that option adds `--pwa`. The choice is remembered for both the button and the keyboard shortcut.
-- Optional shortcut: add `"cmd-shift-r": "mod.open:pulls-review"` to `global` in `keys.json`.
+- Install: copy `extras/mods/pulls-review/` into `~/.config/herdr-app/mods/`, then add a key to the `global` section of your `keys.json`: `"cmd-shift-r": "mod.open:pulls-review"`.
 - Runs read-only `git status --porcelain` and `pulls.review`.
+- This layout's tab bar has no button for it; use the key or the command palette.
 
 ### Theme and settings from the preview
 
