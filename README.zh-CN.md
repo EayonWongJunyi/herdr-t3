@@ -14,6 +14,7 @@
   - Spaces：只在不寻常时显示仓库、分支和领先/落后；worktree 折叠在它的 checkout 下；机器多于一台时按机器分组。
   - Agents：按 space 或按优先级分组，可置顶，子 agent 缩进在父级下。
   - Focus：T3 式 Settle。需要你的 agent 以卡片留在上方；结束的由你手动 Settle 进底部的安静列表，有新工作时自动回来。工作中的 agent 折叠进 Working 收纳区。
+- **释放已放下的 Pi 进程**：Settle 满 30 分钟后，隐藏且未置顶的 Pi 和它空闲的子 agent 可以结束运行，会话和窗格位置保留。打开标签时自动接回父 agent；有窗格的子 agent 提供手动 Resume 按钮。
 - **Agent 模式**（`cmd-shift-a`，或 `+` 左边的按钮）：工作区不再显示当前标签，而是把一个 agent 铺满显示，在侧栏点谁就显示谁。标签栏变成一条显示该 agent 的栏，滚轮切换 agent。会落到看不见的地方的操作都会自动退回标签模式：在当前 space 新开 shell 或分屏（并聚焦过去）、从 `+` 启动任何东西、焦点移到 shell 上。新出现的 agent pane（多半是 agent 自己派生的）不会抢走画面，它会出现在侧栏里。
 - **各处同一个名字**：Focus 卡片、agents 列表、标签和窗格标题用同一条规则给终端取名：Pi 会话名，其次是你命名过的标签，再其次是有意义的终端标题，最后是程序名。同一个标签里的两个 Pi 各自显示自己的会话名。
 - **各处同一套状态标记**：工作中转圈，blocked 显示 `!`，done 显示圆点。显示 Focus 时，已 Settle 的 agent 在标签和窗格标题上也不再显示 done 圆点。
@@ -28,6 +29,7 @@
 
 - **侧栏**：侧栏右上角的按钮（或 `cmd-shift-b`）在 Spaces + Agents 和 Focus 之间切换；旁边那个按钮隐藏侧栏。
 - **Focus**：鼠标移到已结束的卡片上，点 `✓ Settle` 收起；有新工作时它会自己回来，也可以点那一行的撤销箭头拿回来。
+- **Released**：淡色 `Released` 表示进程已经结束。点卡片或标签即可接回。取消 Settle 只改变列表位置，打开时才接回。工作中、blocked、置顶或当前可见的对话继续运行。只在本布局里、明确 Settle 后释放，普通空闲时间不计入。
 - **Agent 模式**：`+` 左边的按钮（或 `cmd-shift-a`）把一个 agent 铺满显示，点侧栏卡片切换显示哪个。新开 shell、分屏或从 `+` 启动东西时会自动回到标签模式。
 
 ## 更新
@@ -43,9 +45,17 @@ Herdr 不会更新别人做的 mod 和布局。再添加一次也不行：安装
 
 - `t3-spaces`：在各 space 的目录里运行只读的 `git status` / `git rev-parse`，监听这些仓库的变化（`watchFolder`），运行 `hc machine ls --json`。
 - `t3-focus`：Settle 或取消 Settle 时运行 `hc label <agent> settled=<ms>:<turn>`。
+- `t3-chrome`：每分钟检查一次，用 `hc ls/get/label/kill` 释放符合条件的 Pi 树，用 `hc rm` 清理标签已关闭的释放记录。结束父进程前复查整棵树，再清理仍存活的子进程。
+- `t3-released`：保留窗格，用 `hc read` 显示最后的输出；打开时启动 `pi --session <保存的文件>`，确认 Pi 已上报同一会话后才移除旧 Core 记录。接回期间用一个短命 Node.js 进程占用 Core 唯一名称，防止两个客户端同时启动同一 Pi；完成后清理，客户端退出后最多一分钟自动失效。失败时保留会话和 Retry 按钮。启动 Pi 也会加载你平常的 Pi 扩展和设置。
 - `t3-new-menu`：向 Herdr 查询装了哪些 agent（`knownAgents`）。
 
 不发网络请求。
+
+## 手动恢复已释放的对话
+
+占位窗格在其他布局里也能接回。Herdr 自带的 agent 列表、`hc ls` 和外部工具只列出仍在运行的 agent，保存的标签仍可打开。
+
+卸载布局前，先打开需要继续运行的对话。不借助 mod 恢复时，运行 `hc get <旧地址> --json`，找到 `t3.resume` 标签，再启动 `pi --session '<保存的文件>'`。没有窗格的子 agent 也保留这个标签。自动释放目前只支持 Pi。Core 无法把检查空闲与结束进程合成一个原子操作，最终复查之后的短暂间隙仍可能收到新消息。
 
 ## 可选扩展
 

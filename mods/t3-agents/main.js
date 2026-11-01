@@ -5,6 +5,7 @@ import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex, Button } from "gpui-base";
 import { agents, terminals, focused, run, theme, shared, setShared, setAgentOrder, openOverlay, closeOverlay, props } from "herdr";
 import { namer } from "./name.js";
+import { withReleased, releaseRecords, pinKey, focusAgent } from "./released.js";
 const RANK = { blocked: 4, done: 3, working: 2, idle: 1 };
 // A sub-agent without a pane isn't in agents(): its raw word, error counting as
 // blocked. It's never done: it reports to its parent, and the parent's done is the news.
@@ -65,14 +66,15 @@ export default class Agents extends View {
   setPins(pins) {
     this.pins = pins;
     localStorage.setItem("pins", JSON.stringify(pins));
+    setShared("t3.pins", pins);
   }
 
   // Drops pins of agents that ended. Only for machines the list has heard from:
   // right after a start, or while a machine connects, its agents aren't listed yet.
   prunePins(all) {
-    const machine = (addr) => (addr.includes("/") ? addr.split("/")[0] : "");
+    const machine = (key) => key.startsWith("/") || /^[A-Za-z]:[\\/]/.test(key) ? "" : key.includes(":") ? key.split(":")[0] : key.includes("/") ? key.split("/")[0] : "";
     const heard = new Set(all.map((k) => machine(k.address)));
-    const live = new Set(all.filter((k) => k.state === "live").map((k) => k.address));
+    const live = new Set([...all.filter((k) => k.state === "live").map(pinKey), ...Object.values(releaseRecords()).map(pinKey)]);
     const kept = this.pins.filter((p) => !heard.has(machine(p)) || live.has(p));
     if (kept.length !== this.pins.length) this.setPins(kept);
   }
@@ -188,9 +190,13 @@ export default class Agents extends View {
     const t = theme();
     if (props()?.sortMenu) return this.sortMenu(t);
     const sort = sortOf();
-    let list = agents();
+    let list = withReleased();
     this.listed = new Map(list.map((a) => [a.address, a.status]));
     const all = terminals();
+    const stable = this.pins.map((p) => pinKey(all.find((k) => k.address === p)) || p);
+    if (stable.some((p, i) => p !== this.pins[i])) this.setPins(stable);
+    if (JSON.stringify(shared("t3.pins")) !== JSON.stringify(this.pins)) setShared("t3.pins", this.pins);
+    const keyOf = (a) => pinKey(all.find((k) => k.address === a.address) ?? a);
     const shown = focused()?.agent;
     const now = Date.now();
     this.track(list, now);
@@ -200,8 +206,8 @@ export default class Agents extends View {
     const rankOf = (a) => urgency.get(a.address);
     if (byPriority) list = [...list].sort((x, y) => rankOf(y) - rankOf(x) || this.since(y) - this.since(x) || y.seq - x.seq);
     this.prunePins(all);
-    const pinned = this.pins.map((p) => list.find((a) => a.address === p)).filter(Boolean);
-    const rest = list.filter((a) => !this.pins.includes(a.address));
+    const pinned = this.pins.map((p) => list.find((a) => keyOf(a) === p)).filter(Boolean);
+    const rest = list.filter((a) => !this.pins.includes(keyOf(a)));
     list = [...pinned, ...rest];
     setAgentOrder(list.map((a) => a.address));
 
@@ -249,7 +255,7 @@ export default class Agents extends View {
       // An agent on another machine (`vps/t7`) says which.
       const machine = a.address.includes("/") ? a.address.split("/")[0] : null;
       const idle = a.status === "idle" && !a.focused;
-      const isPinned = this.pins.includes(a.address);
+      const isPinned = this.pins.includes(keyOf(a));
       // Shown on hover in the status slot: the far edge, nothing moves, no empty gap.
       const pin = Button.new(`pin-${a.address}`)
         .size(20).flex_none().flex().items_center().justify_center()
@@ -260,7 +266,7 @@ export default class Agents extends View {
           cx.stop_propagation();
           // Reordering can move the row without a pointer-leave event.
           this.hovered = null;
-          this.setPins(isPinned ? this.pins.filter((p) => p !== a.address) : [...this.pins, a.address]);
+          this.setPins(isPinned ? this.pins.filter((p) => p !== keyOf(a)) : [...this.pins, keyOf(a)]);
           cx.notify();
         })
         .child(svg(`mods/workspace-chrome/${isPinned ? "pin-off" : "pin"}.svg`).size(14).flex_none());
@@ -296,7 +302,7 @@ export default class Agents extends View {
           cx.notify();
         })
         // agent.focus, not pane.focus: in tabs it focuses the pane, and it picks what the agent view shows.
-        .on_click(() => run("agent.focus", { terminal: a.address }))
+        .on_click(() => focusAgent(a))
         .child(h_flex().id(`agent-fold-${a.address}`).size(18).flex_none().items_center().justify_center()
           .when(subs.length > 0, el => el.accessibility_label(this.isFolded(a.address) ? "Expand sub-agents" : "Collapse sub-agents").on_click((_e, cx) => {
             cx.stop_propagation();
@@ -306,6 +312,7 @@ export default class Agents extends View {
           .child(div().min_w(0).truncate().text_color(idle ? t.muted : t.foreground).child(name))
           .when(Boolean(where), el => el.child(div().flex_1().flex_shrink(1000).min_w(0).truncate().text_size(12).text_color(t.dim).child(where))))
         .when(Boolean(machine), el => el.child(div().text_size(11).text_color(t.dim).child(machine)))
+        .when(a.released, el => el.child(div().text_size(11).text_color(t.dim).child("Released")))
         .child(h_flex().id(`controls-${a.address}`).flex_none().items_center().gap(4)
           .when(folded, el => el.child(fold(a, subs)))
           .child(this.hovered === a.address ? pin : this.status(t, fromKid ? { status: kid } : a, fromKid ? " (sub-agent)" : "").id(`status-${a.address}`)));

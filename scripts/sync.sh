@@ -9,6 +9,7 @@ gen="--exclude gpui-kit.d.ts --exclude jsconfig.json"
 
 # t3-focus/name.js is the one naming rule; a mod can't import outside its folder, so each gets a copy.
 for m in t3-agents t3-tabs t3-pane; do cp "$src/mods/t3-focus/name.js" "$src/mods/$m/"; done
+for m in t3-agents t3-tabs t3-chrome t3-released; do cp "$src/mods/t3-focus/released.js" "$src/mods/$m/"; done
 
 # mod.json stays per repo: here the layout places it ("none"), alone it docks left.
 rsync -a --delete $gen --exclude mod.json "$src/mods/t3-focus/" "$focus/mods/t3-focus/"

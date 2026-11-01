@@ -32,6 +32,7 @@ Herdr App 的一个安静、近似 T3 Code 的窗口：左侧 268px 侧栏，可
 - **Spaces**：单击切换，右键打开自带 `menu`，拖动排序；悬停 checkout 的头像时它变成 worktree 的折叠箭头。只在 git 可能变化时读取（新位置、命令或轮次结束、机器重新连上），窗口在前台时另有慢速兜底轮询。
 - **Agents**：单击执行 `agent.focus`（标签模式下聚焦那个窗格；Agent 模式下选定显示哪个 agent），Focus 卡片相同；悬停时状态位变成置顶按钮（布局不动）；悬停父级图标可折叠子 agent，折叠后显示淡色数量。你正在看的 done agent 留在 Done 组，直到你离开。
 - **Focus / Settle**：悬停已结束的卡片出现 `✓ Settle`；悬停已 Settle 的行出现撤销箭头；有新工作（working、blocked，或 Settle 后又结束过一轮）自动回来。不做自动 Settle。
+- **已释放的 Pi**：顶层 Pi 的 Settle 满 30 分钟，且整棵树都 idle/done、可接回、未置顶、未显示时，品牌栏可以释放整棵树。先保存每个会话路径，在每个终端窗格旁放 `t3-released`，重读树和轮次，再先结束父、后清理仍存活的子进程。卡片、列表、标签保留名字，增加淡色 `Released`。打开保存的标签只自动接回父 agent；子窗格提供手动 Resume。取消 Settle 只改关注状态，不启动进程。普通空闲不触发释放。
 - **标签**：单击选中，双击改名，拖动排序，右键菜单，滚轮切换上/下一个标签（Agent 模式下切换 agent）。
 - **Agent 模式**：切换按钮或 `cmd-shift-a`（`t3-tabs.view`）对 stack `view` 执行 `layout.select`（`main` / `agent`）。它让键盘停在这个 agent 上，所以会落到看不见的地方的操作都会退回标签模式：当前 space 新出现的 shell 或 mod 窗格（分屏、新标签；随后对它执行 `pane.focus`）、从 `+` 启动的任何东西（`t3-new-menu` 先退出 Agent 模式）、用键盘把焦点移到 shell。新出现的 agent 窗格不抢画面；用键盘把焦点移到 agent 窗格时改为显示那个 agent。
 - 置顶、折叠、排序、筛选和收纳区状态按屏幕保存（`localStorage` / 共享状态 `agents.sort`、`space.colors`）。
@@ -42,6 +43,9 @@ Herdr App 的一个安静、近似 T3 Code 的窗口：左侧 268px 侧栏，可
 - Mods：`t3-chrome`、`t3-spaces`、`t3-agents`、`t3-tabs`、`t3-pane`、`t3-new-menu` 分别改自 Herdr 自带的 `workspace-chrome`、`spaces`、`agents`、`tabs`、`pane`、`new-menu`；`t3-focus` 是新写的。原样使用的自带 mod：`workspace-status`、`picker`、`menu`，以及 `mods/workspace-chrome/` 下的图标和 `mods/pane/close.svg`。
 - `keys.json`：`layout:herdr-t3` → `cmd-shift-b`：`t3-chrome.sidebar`，`cmd-shift-a`：`t3-tabs.view`。
 - 运行的程序：`t3-spaces` 运行只读的 `git status` / `git rev-parse`（不加可选锁、不用 fsmonitor）和 `hc machine ls --json`；`t3-focus` 运行 `hc label <agent> settled=<ms>:<turn>`。
+- `t3-chrome/release.js` 每分钟在本布局检查一次，用 `hc ls/get/label/kill/rm` 保存并结束 Pi 树，清理标签关闭后的旧记录。`t3-released` 读取最后的输出，在保存的位置执行 `pane.split {argv:["pi","--session",file]}`。等新 Pi 上报完全相同的 `pi.session_file` 才移除旧 Core 记录和占位；保留 Settle 时间，轮次改用新终端的计数。失败时保留恢复信息并提供 Retry。
+- `scripts/sync.sh` 将 `mods/t3-focus/released.js` 复制到列表、品牌栏和占位 mod。释放记录保存在共享状态 `t3.released`、占位 props 和 Core 的 `t3.resume`、`t3.released`、`t3.record` 标签中；共享记录保存实际占位 pane id。置顶以机器和 Pi 会话路径识别，接回换地址后仍有效。独立侧栏不运行释放循环。
+- 接回前通过 `hc run --rm --no-parent --no-notify --bg --name … -- node -e 'setTimeout(()=>{},60000)'` 占用 Core 唯一的 live 名称 `t3-resume-<旧id>`。竞争失败的客户端等待并复用 replacement 标签，成功的一方在 `finally` 清理占用。按当前屏幕的 space UUID 和 machine 转换保存的 id 后再查询 Core，props 本身不带机器前缀转换。启动中的查询只走一秒定时器，不从 render 发起。
 
 ## 注意
 
@@ -51,6 +55,7 @@ Herdr App 的一个安静、近似 T3 Code 的窗口：左侧 268px 侧栏，可
 - 窗口不重绘时（在后台）mod 的 `render` 不会执行：要在窗口位于前台时测试 Agent 模式的退出。
 - 碰到 index 的 git 命令会再次唤醒目录监听：始终带上 `--no-optional-locks -c core.fsmonitor=false`。
 - Settle 标签大约 0.65 秒后才出现在 `terminals()`：要保留待定值。
+- pane mod 的自定义 props 不提供自身 pane id，要保存 `pane.split` 返回的 id。Core 不能原子地检查空闲并结束树，kill 前要复查；余下的短暂间隙仍可能收到新工作。其他布局可以接回占位，但不新释放。自带 agent 列表和外部工具不列出已释放的进程；手动恢复用 `hc get <旧地址> --json` → `t3.resume` → `pi --session <文件>`。
 - macOS 无标题栏时，侧栏隐藏或很窄，标签栏要给窗口按钮留位置（`layout().traffic_lights`）。
 - `mods/t3-spaces/check-sidebar.cjs` 和 `mods/t3-pane/check-pane.cjs` 用假的 `herdr` 加载 mod；要在已安装的 home 里用 `node` 运行，因为它们在那里找自带图标。
 
@@ -61,4 +66,5 @@ Herdr App 的一个安静、近似 T3 Code 的窗口：左侧 268px 侧栏，可
 - `cmd-shift-b` 在 Spaces + Agents 和 Focus 之间切换侧栏。
 - `cmd-shift-a` 只显示一个 agent；点侧栏卡片就显示那个；在其中分出一个 shell，会退回标签模式并聚焦到这个 shell。
 - 在 Focus 里 Settle 一个已结束的 agent，它移入 Settled，标签上的完成圆点消失；再给它发提示，它回来。
+- `node mods/t3-chrome/check-release.cjs` 通过。临时 Pi 的 Settle 满 30 分钟后释放，标签仍在；打开后只启动一个保留原对话的父 Pi，子 agent 继续保持已释放。kill 前出现工作中的子、新轮次、新子、置顶、打开标签或切布局，均取消释放。接回启动失败时旧记录保留，可以重试。
 - worktree space 折叠显示在它的 checkout 下；远程机器有自己的分组标题。
