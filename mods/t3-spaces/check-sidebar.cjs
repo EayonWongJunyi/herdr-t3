@@ -45,7 +45,7 @@ function fire(node, event, ...args) {
 }
 
 const modRoot = path.dirname(__dirname);
-const cx = { notify() {}, stop_propagation() {}, spawn() {}, timer: { every() {} } };
+const cx = { notify() {}, stop_propagation() {}, spawn() {}, timer: { every() {} }, focus_handle: () => ({ focus() {} }) };
 function fixture(width) {
   const program = { key: "pi", name: "Pi", agent: true, tint: true, icon: "icons/pi.svg" };
   const tabs = ["local task", "second task", "remote task"].map((name, i) => ({ id: `b${i}`, name, named: true }));
@@ -57,7 +57,7 @@ function fixture(width) {
   const panes = agents.map(a => ({ ...a, terminal: a.address, cwd: `/work/${a.space}` }));
   const slots = { sidebar: { id: "sidebar", size: { px: width } }, spaces: { id: "spaces", size: { px: 90 } } };
   const state = { "agents.sort": "grouped" };
-  const calls = [], overlays = [], stores = new Map(), labelled = [];
+  const calls = [], overlays = [], stores = new Map(), labelled = [], shown = { agent: "child" };
   const theme = new Proxy({ selected: "#2c2c2f", hover: "#202024", working: "#6b93ff", blocked: "#f0a33a", done: "#ececf0", muted: "#a9a9b4" }, { get: (t, k) => t[k] ?? "#a9a9b4" });
   const env = {
     View: class {}, div: () => element(), h_flex: () => element("h"), v_flex: () => element("v"),
@@ -66,7 +66,7 @@ function fixture(width) {
     InputState: { new: () => ({ on() {}, value: () => "", set_value() {}, focus() {} }) },
     svg: source => element("svg", source), image: source => element("image", source),
     spaces: () => spaces, agents: () => agents, terminals: () => terminals, panes: () => panes,
-    machines: () => [{ name: "vps", layout: "ready" }], focused: () => ({ agent: "child" }),
+    machines: () => [{ name: "vps", layout: "ready" }], focused: () => shown,
     exec: async () => ({ code: 1, stdout: "" }),
     window: () => ({ platform: "macos" }), props: () => ({}), theme: () => theme,
     settings: () => ({ zoom: 1 }), home: () => "/home/test",
@@ -94,7 +94,7 @@ function fixture(width) {
     mod.init?.(props, cx);
     return mod;
   }
-  return { ...env, load, slots, state, calls, overlays, stores, labelled };
+  return { ...env, load, slots, state, calls, overlays, stores, labelled, shown };
 }
 
 for (const width of [180, 200, 240, 268, 480]) {
@@ -194,7 +194,7 @@ for (const width of [180, 200, 240, 268, 480]) {
   fire(find(at, "sub-child"), "on_click", {}, cx);
   assert.deepEqual(f.calls.pop(), ["terminal.peek", { terminal: "child" }]);
   fire(agent, "on_click", {}, cx);
-  assert.deepEqual(f.calls.pop(), ["pane.focus", { pane: "p0" }]);
+  assert.deepEqual(f.calls.pop(), ["agent.focus", { terminal: "t0" }]);
   assert.equal(f.stores.get("t3-agents").get("pins"), undefined, "ordinary row click does not pin");
   fire(space, "on_mouse_down:left", {}, cx);
   fire(space, "on_mouse_up:left", {}, cx);
@@ -387,6 +387,44 @@ for (const width of [180, 200, 240, 268, 480]) {
   f.terminals().find(k => k.address === "t0").labels = { "pi.session": "mine" };
   assert.ok(strings(find(f.load("t3-tabs").render(cx), "tab-b0")).includes("mine"), "an unnamed tab reads as its agent's session");
   assert.ok(strings(f.load("t3-pane", { pane: "p0" }).render(cx)).includes("mine"), "its pane header reads the same");
+
+  // The agent view: a "view" stack in the layout; the bar names the agent shown instead of listing tabs.
+  assert.equal(find(f.load("t3-tabs").render(cx), "view-toggle"), null, "no view stack, no toggle");
+  f.slots.view = { id: "view", active: "main" };
+  fire(find(f.load("t3-tabs").render(cx), "view-toggle"), "on_click", {}, cx);
+  assert.deepEqual(f.calls.pop(), ["layout.select", { stack: "view", child: "agent" }]);
+  f.slots.view.active = "agent"; f.shown.agent = "t0";
+  const bar = f.load("t3-tabs").render(cx);
+  assert.ok(!find(bar, "tab-b0") && strings(find(bar, "agent-bar")).includes("mine"), "the agent view names its agent, no tabs");
+  fire(find(bar, "view-toggle"), "on_click", {}, cx);
+  assert.deepEqual(f.calls.pop(), ["layout.select", { stack: "view", child: "main" }]);
+
+  // The agent view keeps the keyboard on its agent: a new shell here brings the tabs back, focused on it;
+  // a new agent pane doesn't take the view; focus moved by keys to an agent pane shows that agent.
+  f.slots.view.active = "agent"; f.shown.pane = "p0"; f.shown.space = "s0"; f.shown.agent = "t0";
+  const watch = f.load("t3-tabs"); watch.render(cx);
+  f.calls.length = 0;
+  f.panes().push({ pane: "p8", terminal: "t8", tab: "b0", title: "pi", program: { key: "pi", name: "Pi", agent: true }, status: null });
+  watch.render(cx);
+  assert.equal(f.calls.length, 0, "a new agent pane doesn't take the view");
+  f.panes().push({ pane: "p9", terminal: "t9", tab: "b0", title: "zsh", program: { key: "shell", name: "zsh", shell: true }, status: null });
+  watch.render(cx);
+  assert.deepEqual(f.calls.splice(0), [["layout.select", { stack: "view", child: "main" }], ["pane.focus", { pane: "p9" }]], "a new shell leaves the agent view, focused");
+  f.panes().push({ pane: "p7", terminal: "t7", tab: "b2", title: "zsh", program: { key: "shell", name: "zsh", shell: true }, status: null });
+  watch.render(cx);
+  assert.equal(f.calls.length, 0, "another space's new shell doesn't");
+  f.shown.pane = "p2"; watch.render(cx);
+  assert.deepEqual(f.calls.pop(), ["agent.focus", { terminal: "vps/t2" }], "focus moved to an agent pane shows it");
+  watch.render(cx);
+  assert.equal(f.calls.length, 0, "only changes act");
+  f.panes().splice(-3); delete f.shown.pane; delete f.shown.space;
+
+  // The + menu leaves the agent view before starting anything.
+  const menu = f.load("t3-new-menu"); menu.target = f.spaces()[0]; f.calls.length = 0;
+  menu.start(null);
+  assert.deepEqual(f.calls[0], ["layout.select", { stack: "view", child: "main" }], "+ leaves the agent view first");
+  f.calls.length = 0;
+  delete f.slots.view;
   assert.equal(find(root, "sidebar-toggle"), null, "with the sidebar shown its own header has the toggle");
   f.slots.sidebar.hidden = true;
   const bare = tabs.render(cx);

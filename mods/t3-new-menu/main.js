@@ -1,7 +1,7 @@
 // New, as T3 starts a thread: pick the space (or a new one), then what to run there.
 import { View, div, svg, image } from "gpui-kit";
 import { h_flex, v_flex, InputState, Input } from "gpui-base";
-import { theme, spaces, panes, knownAgents, run, openOverlay, closeOverlay, props, window, keys, shared, home } from "herdr";
+import { theme, spaces, panes, knownAgents, run, openOverlay, closeOverlay, props, window, keys, shared, home, layout } from "herdr";
 
 function shortcut(name) {
   const k = keys().find(b => b.section === "global" && b.action === name);
@@ -27,6 +27,15 @@ function place(s, ps) {
   return ps.find((p) => tabs.has(p.tab) && p.cwd)?.cwd || s.folder;
 }
 const NEW = { id: "new", name: "New space" };
+
+function find(node, id) {
+  if (node?.id === id) return node;
+  for (const child of node?.children ?? []) {
+    const found = find(child, id);
+    if (found) return found;
+  }
+  return null;
+}
 
 export default class NewMenu extends View {
   init(_props, cx) {
@@ -76,6 +85,8 @@ export default class NewMenu extends View {
   start(a) {
     closeOverlay(props().overlay);
     const what = a ? { argv: a.run } : {};
+    // Starting anything here means seeing it: the agent view would keep it out of sight.
+    if (find(layout(), "view")?.active === "agent") run("layout.select", { stack: "view", child: "main" });
     if (this.target === NEW) run("space.new", a ? { ...what, tab: a.name } : what);
     else run("tab.new", { space: this.target.id, ...(a ? { ...what, name: a.name } : {}) });
   }

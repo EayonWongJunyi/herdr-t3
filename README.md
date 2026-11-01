@@ -2,11 +2,23 @@
 
 English · [中文](README.zh-CN.md)
 
-A [T3 Code](https://github.com/pingdotgg/t3code)-like layout for Herdr App: Spaces + Agents or a Focus sidebar with T3-style Settle, slim tabs, framed panes.
+A [T3 Code](https://github.com/pingdotgg/t3code)-like layout for Herdr App: Spaces + Agents or a Focus sidebar with T3-style Settle, slim tabs, framed panes, and an agent view that shows one agent at a time.
 
 ![Herdr T3](preview.png)
 
 Only want the Settle sidebar? It is also published alone: [herdr-t3-focus](https://github.com/JinJieBeWater/herdr-t3-focus).
+
+## Features
+
+- **Two sidebars, one key apart** (`cmd-shift-b`): Spaces + Agents, or Focus.
+  - Spaces: repo, branch and ahead/behind only when they're unusual; worktrees folded under their checkout; grouped by machine once there's more than one.
+  - Agents: grouped by space or by priority, pins, sub-agents nested under their parent.
+  - Focus: T3-style Settle. Agents that need you stay up top as cards; finished ones are settled by hand into a quiet list and come back on new work. Busy agents fold into a Working shelf.
+- **Agent view** (`cmd-shift-a`, or the button left of `+`): the work area shows one agent full size instead of the active tab, and clicking in the sidebar picks which. The tab bar turns into a bar naming that agent; the scroll wheel walks agents. Anything that would land out of sight brings the tabs back: a new shell or split in this space (focused), starting something from `+`, moving focus to a shell. A new agent pane (often an agent starting another) doesn't take the view; it shows up in the sidebar.
+- **One name everywhere**: Focus cards, the agents list, tabs and pane headers name a terminal the same way: its Pi session, then a tab you named, then a telling terminal title, else the program. Two Pis in one tab read as their own sessions.
+- **The same status marks everywhere**: a spinner while working, `!` when blocked, a dot when done. While Focus shows, a settled agent's done dot leaves the tabs and pane headers too.
+- **Slim tabs, framed panes**: 28px pill tabs; rounded panes with a 28px header (name, folder, status; split, zoom and close on hover).
+- **New menu** (`+`): pick a space (or a new one), then a terminal or any installed agent.
 
 ## Install
 
@@ -61,7 +73,7 @@ Herdr doesn't ship [Maple Mono NF CN](https://github.com/subframe7536/maple-font
 
 ### Keys I use with it
 
-In the `global` section of `keys.json`, besides the layout's own `cmd-shift-b`:
+In the `global` section of `keys.json`, besides the layout's own `cmd-shift-b` and `cmd-shift-a`:
 
 | Key | Command | Does |
 | --- | --- | --- |

@@ -93,33 +93,47 @@
           "type": "row",
           "children": [
             {
-              "id": "main",
-              "type": "block",
-              "content": {
-                "tab": "active",
-                "pane": {
-                  "header": {
-                    "content": {
-                      "mod": "t3-pane"
-                    },
-                    "reveal": "always",
-                    "height": 28,
-                    "position": "top"
-                  },
+              "id": "view",
+              "type": "stack",
+              "active": "main",
+              "children": [
+                {
+                  "id": "main",
+                  "type": "block",
+                  "content": {
+                    "tab": "active",
+                    "pane": {
+                      "header": {
+                        "content": {
+                          "mod": "t3-pane"
+                        },
+                        "reveal": "always",
+                        "height": 28,
+                        "position": "top"
+                      },
+                      "background": "background",
+                      "border": {
+                        "width": 0,
+                        "color": "border"
+                      },
+                      "focus": {
+                        "width": 0,
+                        "color": "border"
+                      },
+                      "radius": 8,
+                      "gap": 8,
+                      "lone": true
+                    }
+                  }
+                },
+                {
+                  "id": "agent",
+                  "type": "block",
+                  "content": { "agent": "focused" },
                   "background": "background",
-                  "border": {
-                    "width": 0,
-                    "color": "border"
-                  },
-                  "focus": {
-                    "width": 0,
-                    "color": "border"
-                  },
-                  "radius": 8,
-                  "gap": 8,
-                  "lone": true
+                  "radius": 8
                 }
-              }
+              ]
             }
           ],
           "padding": [2, 8],

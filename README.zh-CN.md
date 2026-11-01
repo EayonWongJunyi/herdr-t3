@@ -2,11 +2,23 @@
 
 [English](README.md) · 中文
 
-给 Herdr App 用的 [T3 Code](https://github.com/pingdotgg/t3code) 风格布局。侧栏可以在 Spaces + Agents 和带 T3 式 Settle 的 Focus 列表之间切换，另有窄标签栏和带圆角边框的窗格。
+给 Herdr App 用的 [T3 Code](https://github.com/pingdotgg/t3code) 风格布局。侧栏可以在 Spaces + Agents 和带 T3 式 Settle 的 Focus 列表之间切换，另有窄标签栏、带圆角边框的窗格，以及一次只看一个 agent 的 Agent 模式。
 
 ![Herdr T3](preview.png)
 
 只想要 Settle 侧栏？它也单独发布了一份：[herdr-t3-focus](https://github.com/JinJieBeWater/herdr-t3-focus)。
+
+## 功能
+
+- **两种侧栏，一键切换**（`cmd-shift-b`）：Spaces + Agents，或 Focus。
+  - Spaces：只在不寻常时显示仓库、分支和领先/落后；worktree 折叠在它的 checkout 下；机器多于一台时按机器分组。
+  - Agents：按 space 或按优先级分组，可置顶，子 agent 缩进在父级下。
+  - Focus：T3 式 Settle。需要你的 agent 以卡片留在上方；结束的由你手动 Settle 进底部的安静列表，有新工作时自动回来。工作中的 agent 折叠进 Working 收纳区。
+- **Agent 模式**（`cmd-shift-a`，或 `+` 左边的按钮）：工作区不再显示当前标签，而是把一个 agent 铺满显示，在侧栏点谁就显示谁。标签栏变成一条显示该 agent 的栏，滚轮切换 agent。会落到看不见的地方的操作都会自动退回标签模式：在当前 space 新开 shell 或分屏（并聚焦过去）、从 `+` 启动任何东西、焦点移到 shell 上。新出现的 agent pane（多半是 agent 自己派生的）不会抢走画面，它会出现在侧栏里。
+- **各处同一个名字**：Focus 卡片、agents 列表、标签和窗格标题用同一条规则给终端取名：Pi 会话名，其次是你命名过的标签，再其次是有意义的终端标题，最后是程序名。同一个标签里的两个 Pi 各自显示自己的会话名。
+- **各处同一套状态标记**：工作中转圈，blocked 显示 `!`，done 显示圆点。显示 Focus 时，已 Settle 的 agent 在标签和窗格标题上也不再显示 done 圆点。
+- **窄标签、带框窗格**：28px 胶囊标签；圆角窗格带 28px 标题栏（名字、目录、状态；悬停时出现分屏、缩放、关闭）。
+- **新建菜单**（`+`）：先选 space（或新建一个），再选终端或任一已安装的 agent。
 
 ## 安装
 
@@ -61,7 +73,7 @@ Herdr 不自带 [Maple Mono NF CN](https://github.com/subframe7536/maple-font)�
 
 ### 我配套用的快捷键
 
-写在 `keys.json` 的 `global` 里，另外还有布局自带的 `cmd-shift-b`：
+写在 `keys.json` 的 `global` 里，另外还有布局自带的 `cmd-shift-b` 和 `cmd-shift-a`：
 
 | 快捷键 | 命令 | 作用 |
 | --- | --- | --- |
