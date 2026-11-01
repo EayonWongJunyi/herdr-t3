@@ -12,6 +12,7 @@ for m in t3-agents t3-tabs t3-pane; do cp "$src/mods/t3-focus/name.js" "$src/mod
 
 # mod.json stays per repo: here the layout places it ("none"), alone it docks left.
 rsync -a --delete $gen --exclude mod.json "$src/mods/t3-focus/" "$focus/mods/t3-focus/"
-rsync -a --delete $gen --include 't3-*/***' --exclude '*' "$src/mods/" "$app/mods/"
+# One mod at a time: other t3-* folders in the app (yours, a test's) are left alone.
+for d in "$src"/mods/t3-*/; do rsync -a --delete $gen "$d" "$app/mods/$(basename "$d")/"; done
 cp "$src"/layouts/herdr-t3.* "$app/layouts/"
 cp "$src/extras/themes/herdr-t3.json" "$app/themes/"
