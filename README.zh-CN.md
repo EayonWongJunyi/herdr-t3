@@ -10,7 +10,7 @@
 
 ## 安装
 
-让你的 Herdr agent 添加 `herdr.dev/layouts/JinJieBeWater/herdr-t3`。手动安装：把 `layouts/t3.json`、`layouts/t3.svg` 和所有 `mods/t3-*` 复制进 `~/.config/herdr-app/`，把 `keys.json` 合并进你自己的，然后按 `ctrl-shift-l` 切换（或运行 `layout.switch {"name": "t3"}`）。外观和行为见 [RECIPE.zh-CN.md](RECIPE.zh-CN.md)。
+让你的 Herdr agent 添加 `herdr.dev/layouts/JinJieBeWater/herdr-t3`。手动安装：把 `layouts/herdr-t3.json`、`layouts/herdr-t3.svg` 和所有 `mods/t3-*` 复制进 `~/.config/herdr-app/`，把 `keys.json` 合并进你自己的，然后按 `ctrl-shift-l` 切换（或运行 `layout.switch {"name": "herdr-t3"}`）。外观和行为见 [RECIPE.zh-CN.md](RECIPE.zh-CN.md)。
 
 ## 它会运行什么
 
@@ -36,11 +36,10 @@
 
 ### 预览图里的主题和设置
 
-`extras/themes/t3-plain.json` 是截图里的深色主题：canvas 和 chrome 为 `#141418`，accent 和 working 为 `#6b93ff`，blocked 为 `#f0a33a`。把它复制进 `~/.config/herdr-app/themes/` 后在设置里选，或者连同字体一起写进 `settings.json`：
+`extras/themes/herdr-t3.json` 是截图里的深色主题：canvas 和 chrome 为 `#141418`，accent 和 working 为 `#6b93ff`，blocked 为 `#f0a33a`。把它复制进 `~/.config/herdr-app/themes/`。它和布局同名，所以是这个布局专属的主题：只有在 Herdr T3 布局里，设置页才会列出它，在那里选上即可。其余设置写进 `settings.json`：
 
 ```json
 {
-  "theme": "t3-plain",
   "appearance": "dark",
   "font": "Maple Mono NF CN",
   "ui_font": "Maple Mono NF CN",

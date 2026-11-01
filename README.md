@@ -10,7 +10,7 @@ Only want the Settle sidebar? It is also published alone: [herdr-t3-focus](https
 
 ## Install
 
-Ask your Herdr agent to add `herdr.dev/layouts/JinJieBeWater/herdr-t3`. By hand: copy `layouts/t3.json`, `layouts/t3.svg` and every `mods/t3-*` into `~/.config/herdr-app/`, merge `keys.json` into yours, then switch with `ctrl-shift-l` (or `layout.switch {"name": "t3"}`). How it should look and behave: [RECIPE.md](RECIPE.md).
+Ask your Herdr agent to add `herdr.dev/layouts/JinJieBeWater/herdr-t3`. By hand: copy `layouts/herdr-t3.json`, `layouts/herdr-t3.svg` and every `mods/t3-*` into `~/.config/herdr-app/`, merge `keys.json` into yours, then switch with `ctrl-shift-l` (or `layout.switch {"name": "herdr-t3"}`). How it should look and behave: [RECIPE.md](RECIPE.md).
 
 ## What it runs
 
@@ -36,11 +36,10 @@ Not part of the layout and not copied by an install; add them by hand if you wan
 
 ### Theme and settings from the preview
 
-`extras/themes/t3-plain.json` is the dark theme in the screenshot: canvas and chrome `#141418`, accent and working `#6b93ff`, blocked `#f0a33a`. Copy it into `~/.config/herdr-app/themes/` and pick it in Settings, or set it in `settings.json` with the fonts:
+`extras/themes/herdr-t3.json` is the dark theme in the screenshot: canvas and chrome `#141418`, accent and working `#6b93ff`, blocked `#f0a33a`. Copy it into `~/.config/herdr-app/themes/`. Named like the layout, it is the layout's own: Settings offers it only while you are in Herdr T3, so pick it there. The rest is in `settings.json`:
 
 ```json
 {
-  "theme": "t3-plain",
   "appearance": "dark",
   "font": "Maple Mono NF CN",
   "ui_font": "Maple Mono NF CN",

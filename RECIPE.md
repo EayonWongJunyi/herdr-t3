@@ -32,9 +32,9 @@ Left to right, divider 1px `border`:
 
 ## Built from
 
-- `layouts/t3.json`: `row` root → `sidebar` column [`brand` block `t3-chrome`; `sidebar-lists` stack [`lists` column [`spaces` `t3-spaces`, `agents` `t3-agents`], `focus` `t3-focus` with props `{ "newMenu": "t3-new-menu" }`]; `sidebar-footer` `t3-chrome` with props `{ "footer": true }`] and `work` column [`tabs` `t3-tabs`; `work-body` row [`main` `{ "tab": "active", "pane": { "header": { "content": { "mod": "t3-pane" } } } }`]; `work-bottom-inset`; `status` `workspace-status`, hidden]. Preview: `layouts/t3.svg`.
+- `layouts/herdr-t3.json`: `row` root → `sidebar` column [`brand` block `t3-chrome`; `sidebar-lists` stack [`lists` column [`spaces` `t3-spaces`, `agents` `t3-agents`], `focus` `t3-focus` with props `{ "newMenu": "t3-new-menu" }`]; `sidebar-footer` `t3-chrome` with props `{ "footer": true }`] and `work` column [`tabs` `t3-tabs`; `work-body` row [`main` `{ "tab": "active", "pane": { "header": { "content": { "mod": "t3-pane" } } } }`]; `work-bottom-inset`; `status` `workspace-status`, hidden]. Preview: `layouts/herdr-t3.svg`.
 - Mods: `t3-chrome`, `t3-spaces`, `t3-agents`, `t3-focus`, `t3-tabs`, `t3-pane` and `t3-new-menu` are reworked from Herdr's shipped `workspace-chrome`, `spaces`, `agents`, `tabs`, `pane` and `new-menu`; `t3-focus` is new. Shipped mods used as they are: `workspace-status`, `picker`, `menu`, and icons from `mods/workspace-chrome/` and `mods/pane/close.svg`.
-- `keys.json`: `layout:t3` → `cmd-shift-b`: `t3-chrome.sidebar`.
+- `keys.json`: `layout:herdr-t3` → `cmd-shift-b`: `t3-chrome.sidebar`.
 - Programs: `t3-spaces` runs read-only `git status` / `git rev-parse` (no optional locks, no fsmonitor) and `hc machine ls --json`; `t3-focus` runs `hc label <agent> settled=<ms>:<turn>`.
 
 ## Watch out
@@ -48,7 +48,7 @@ Left to right, divider 1px `border`:
 
 ## Done when
 
-- `herdr-app check` passes for every `mods/t3-*` and `layout.switch {"name": "t3"}` shows the window above.
+- `herdr-app check` passes for every `mods/t3-*` and `layout.switch {"name": "herdr-t3"}` shows the window above.
 - `node mods/t3-spaces/check-sidebar.cjs` and `node mods/t3-pane/check-pane.cjs` print their `ok` lines.
 - `cmd-shift-b` switches the sidebar between Spaces + Agents and Focus.
 - Settling a finished agent in Focus moves it to Settled and removes its done dot from the tab; prompting it again brings it back.

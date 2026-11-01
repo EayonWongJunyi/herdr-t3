@@ -34,9 +34,9 @@ Herdr App 的一个安静、近似 T3 Code 的窗口：左侧 268px 侧栏，可
 
 ## 由什么构成
 
-- `layouts/t3.json`：根为 `row` → `sidebar` 列 [`brand` 块 `t3-chrome`；`sidebar-lists` stack [`lists` 列 [`spaces` `t3-spaces`、`agents` `t3-agents`]、`focus` `t3-focus`，props `{ "newMenu": "t3-new-menu" }`]；`sidebar-footer` `t3-chrome`，props `{ "footer": true }`]，以及 `work` 列 [`tabs` `t3-tabs`；`work-body` 行 [`main` `{ "tab": "active", "pane": { "header": { "content": { "mod": "t3-pane" } } } }`]；`work-bottom-inset`；`status` `workspace-status`，隐藏]。预览图：`layouts/t3.svg`。
+- `layouts/herdr-t3.json`：根为 `row` → `sidebar` 列 [`brand` 块 `t3-chrome`；`sidebar-lists` stack [`lists` 列 [`spaces` `t3-spaces`、`agents` `t3-agents`]、`focus` `t3-focus`，props `{ "newMenu": "t3-new-menu" }`]；`sidebar-footer` `t3-chrome`，props `{ "footer": true }`]，以及 `work` 列 [`tabs` `t3-tabs`；`work-body` 行 [`main` `{ "tab": "active", "pane": { "header": { "content": { "mod": "t3-pane" } } } }`]；`work-bottom-inset`；`status` `workspace-status`，隐藏]。预览图：`layouts/herdr-t3.svg`。
 - Mods：`t3-chrome`、`t3-spaces`、`t3-agents`、`t3-tabs`、`t3-pane`、`t3-new-menu` 分别改自 Herdr 自带的 `workspace-chrome`、`spaces`、`agents`、`tabs`、`pane`、`new-menu`；`t3-focus` 是新写的。原样使用的自带 mod：`workspace-status`、`picker`、`menu`，以及 `mods/workspace-chrome/` 下的图标和 `mods/pane/close.svg`。
-- `keys.json`：`layout:t3` → `cmd-shift-b`：`t3-chrome.sidebar`。
+- `keys.json`：`layout:herdr-t3` → `cmd-shift-b`：`t3-chrome.sidebar`。
 - 运行的程序：`t3-spaces` 运行只读的 `git status` / `git rev-parse`（不加可选锁、不用 fsmonitor）和 `hc machine ls --json`；`t3-focus` 运行 `hc label <agent> settled=<ms>:<turn>`。
 
 ## 注意
@@ -50,7 +50,7 @@ Herdr App 的一个安静、近似 T3 Code 的窗口：左侧 268px 侧栏，可
 
 ## 完成标准
 
-- 每个 `mods/t3-*` 都通过 `herdr-app check`，`layout.switch {"name": "t3"}` 显示上面描述的窗口。
+- 每个 `mods/t3-*` 都通过 `herdr-app check`，`layout.switch {"name": "herdr-t3"}` 显示上面描述的窗口。
 - `node mods/t3-spaces/check-sidebar.cjs` 和 `node mods/t3-pane/check-pane.cjs` 输出各自的通过行。
 - `cmd-shift-b` 在 Spaces + Agents 和 Focus 之间切换侧栏。
 - 在 Focus 里 Settle 一个已结束的 agent，它移入 Settled，标签上的完成圆点消失；再给它发提示，它回来。
