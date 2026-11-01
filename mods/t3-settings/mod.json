@@ -1,0 +1,5 @@
+{
+  "place": "none",
+  "title": "T3 settings",
+  "overlay": { "kind": "dialog", "width": 600, "height": 460 }
+}

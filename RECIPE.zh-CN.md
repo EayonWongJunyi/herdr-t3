@@ -15,7 +15,7 @@ Herdr App 的一个安静、近似 T3 Code 的窗口：左侧 268px 侧栏，可
   - **列表**，二选一（stack）：
     - **Spaces + Agents**，1:1 分割（各至少 90px）。Spaces：彩色方形头像带 space 首字母；worktree 折叠在其主 checkout 下，带树线；机器多于一台时按机器分组；名字后面只显示不寻常的 git 信息（`repo · branch ↑2 ↓1`，省略 `main` / `master`）。Agents：按 space 分组或按优先级（排序菜单），置顶的在 `Pinned` 组，子 agent 带树线缩进在父级下；14px 状态标记靠右。
     - **Focus**：T3 侧栏。需要你的 agent 显示为卡片，底部是折叠的 Working 和 Settled 收纳区（见 `mods/t3-focus`；[单独 mod 的 recipe](https://github.com/JinJieBeWater/herdr-t3-focus/blob/main/RECIPE.zh-CN.md) 有完整说明）。
-  - **底栏**（41px，上边框）：一行 Settings；App 更新就绪时带一个 6px `accent` 圆点。
+  - **底栏**（41px，上边框）：一行 Settings；App 更新就绪时带一个 6px `accent` 圆点。独立的 `T3` 按钮打开居中的 600×460 设置页，Appearance 下为 Focus border，Behavior 下为 Auto release。
 - **工作区**：
   - **标签栏**（40px，可拖动窗口）：当前 space 的标签，28px 胶囊（圆角 6，当前标签 `selected`）：程序图标、名字（没人命名的标签按下面的命名规则显示其中的 agent，没有 agent 就显示当前 pane），工作中显示转圈，blocked 显示 `!` 徽章，done 且未看显示 7px `done` 圆点；当前标签有关闭 `×`。然后是 26px 的视图切换按钮（`square` 图标：只看一个 agent；`layers`：显示标签）和 `+`（打开 `t3-new-menu`）。Agent 模式下胶囊换成一条 agent 栏：程序图标、agent 名（`foreground`）、所在 space（`dim`）、状态标记。Windows 上有窗口按钮。侧栏隐藏时，最左边出现侧栏开关，同时统计 agent：blocked、working、done。
   - **工作主体**（内边距 2/8，间距 8），二选一（stack）：
@@ -33,7 +33,7 @@ Herdr App 的一个安静、近似 T3 Code 的窗口：左侧 268px 侧栏，可
 - **Spaces**：单击切换，右键打开自带 `menu`，拖动排序；悬停 checkout 的头像时它变成 worktree 的折叠箭头。只在 git 可能变化时读取（新位置、命令或轮次结束、机器重新连上），窗口在前台时另有慢速兜底轮询。
 - **Agents**：单击执行 `agent.focus`（标签模式下聚焦那个窗格；Agent 模式下选定显示哪个 agent），Focus 卡片相同；悬停时状态位变成置顶按钮（布局不动）；悬停父级图标可折叠子 agent，折叠后显示淡色数量。你正在看的 done agent 留在 Done 组，直到你离开。
 - **Focus / Settle**：悬停已结束的卡片出现 `✓ Settle`；悬停已 Settle 的行出现撤销箭头；有新工作（working、blocked，或 Settle 后又结束过一轮）自动回来。不做自动 Settle。
-- **已释放的 Pi**：顶层 Pi 的 Settle 满 30 分钟，且整棵树都 idle/done、可接回、未置顶、未显示时，品牌栏可以释放整棵树。先保存每个会话路径，在每个终端窗格旁放 `t3-released`，重读树和轮次，再先结束父、后清理仍存活的子进程。卡片、列表、标签保留名字，增加淡色 `Released`。打开保存的标签只自动接回父 agent；子窗格提供手动 Resume。取消 Settle 只改关注状态，不启动进程。普通空闲不触发释放。
+- **已释放的 Pi**：默认关闭，只有通过 **T3 → Behavior → Auto release** 将共享设置 `t3.auto-release` 明确设为 `true` 才启用新回收。顶层 Pi 的 Settle 满 30 分钟，且整棵树都 idle/done、可接回、未置顶、未显示时，品牌栏可以释放整棵树。先保存每个会话路径，在每个终端窗格旁放 `t3-released`，重读树和轮次，再先结束父、后清理仍存活的子进程。准备期间关掉开关，最终复查会取消释放。卡片、列表、标签保留名字，增加淡色 `Released`。打开保存的标签只自动接回父 agent；子窗格提供手动 Resume。关闭自动回收后，已保存的对话仍能接回。普通空闲不触发释放。
 - **标签**：单击选中，双击改名，拖动排序，右键菜单，滚轮切换上/下一个标签（Agent 模式下切换 agent）。
 - **Agent 模式**：切换按钮或 `cmd-shift-a`（`t3-tabs.view`）对 stack `view` 执行 `layout.select`（`main` / `agent`）。它让键盘停在这个 agent 上，所以会落到看不见的地方的操作都会退回标签模式：当前 space 新出现的 shell 或 mod 窗格（分屏、新标签；随后对它执行 `pane.focus`）、从 `+` 启动的任何东西（`t3-new-menu` 先退出 Agent 模式）、用键盘把焦点移到 shell。新出现的 agent 窗格不抢画面；用键盘把焦点移到 agent 窗格时改为显示那个 agent。
 - 置顶、折叠、排序、筛选和收纳区状态按屏幕保存（`localStorage` / 共享状态 `agents.sort`、`space.colors`）。
@@ -43,6 +43,7 @@ Herdr App 的一个安静、近似 T3 Code 的窗口：左侧 268px 侧栏，可
 - `layouts/herdr-t3.json`：根为 `row` → `sidebar` 列 [`brand` 块 `t3-chrome`；`sidebar-lists` stack [`lists` 列 [`spaces` `t3-spaces`、`agents` `t3-agents`]、`focus` `t3-focus`，props `{ "newMenu": "t3-new-menu" }`]；`sidebar-footer` `t3-chrome`，props `{ "footer": true }`]，以及 `work` 列 [`tabs` `t3-tabs`；`work-body` 行 [`view` stack，默认 `main` [`main` `{ "tab": "active", "pane": { "header": { "content": { "mod": "t3-pane" } } } }`、`agent` `{ "agent": "focused" }`]]；`work-bottom-inset`；`status` `workspace-status`，隐藏]。预览图：`layouts/herdr-t3.svg`。
 - Mods：`t3-chrome`、`t3-spaces`、`t3-agents`、`t3-tabs`、`t3-pane`、`t3-new-menu` 分别改自 Herdr 自带的 `workspace-chrome`、`spaces`、`agents`、`tabs`、`pane`、`new-menu`；`t3-focus` 是新写的。原样使用的自带 mod：`workspace-status`、`picker`、`menu`，以及 `mods/workspace-chrome/` 下的图标和 `mods/pane/close.svg`。
 - `keys.json`：`layout:herdr-t3` → `cmd-shift-b`：`t3-chrome.sidebar`，`cmd-shift-a`：`t3-tabs.view`。
+- `t3-settings`：使用原生 Switch。Focus border 只在点击时改变最新布局中的焦点颜色；Auto release 将布尔值保存到共享状态。渲染不改布局，也不启用设置。
 - 运行的程序：`t3-spaces` 运行只读的 `git status` / `git rev-parse`（不加可选锁、不用 fsmonitor）和 `hc machine ls --json`；`t3-focus` 运行 `hc label <agent> settled=<ms>:<turn>`。
 - `t3-chrome/release.js` 每分钟在本布局检查一次，用 `hc ls/get/label/kill/rm` 保存并结束 Pi 树，清理标签关闭后的旧记录。`t3-released` 读取最后的输出，在保存的位置执行 `pane.split {argv:["pi","--session",file]}`。等新 Pi 上报完全相同的 `pi.session_file` 才移除旧 Core 记录和占位；保留 Settle 时间，轮次改用新终端的计数。失败时保留恢复信息并提供 Retry。
 - `scripts/sync.sh` 将 `mods/t3-focus/released.js` 复制到列表、品牌栏和占位 mod。释放记录保存在共享状态 `t3.released`、占位 props 和 Core 的 `t3.resume`、`t3.released`、`t3.record` 标签中；共享记录保存实际占位 pane id。置顶以机器和 Pi 会话路径识别，接回换地址后仍有效。独立侧栏不运行释放循环。

@@ -39,7 +39,7 @@ async function snapshot(address, machine) {
 
 export function eligible(tree, now, pins) {
   const root = tree[0];
-  if (shared("layout") !== "herdr-t3") return false;
+  if (shared("t3.auto-release") !== true || shared("layout") !== "herdr-t3") return false;
   pins = shared("t3.pins") ?? pins;
   if (!root || tree.some((k) => k.state !== "live" || k.rm || k.status?.app !== "pi" || !quiet(k) || !k.labels?.["pi.session_file"] || pins.includes(pinKey(k)) || pins.includes(k.address))) return false;
   const settled = (root.labels?.settled ?? "").split(":").map(Number);
@@ -57,6 +57,7 @@ export function eligible(tree, now, pins) {
 const stamp = (tree) => JSON.stringify(tree.map((k) => [k.address, k.turn, k.labels?.settled, k.labels?.["pi.session_file"]]));
 
 export async function releaseTree(address, machine, pins) {
+  if (shared("t3.auto-release") !== true) return;
   const before = await snapshot(address, machine);
   if (!eligible(before, Date.now(), pins)) return;
   const visible = agents(), ps = panes(), records = [], placeholders = [];
@@ -133,6 +134,7 @@ export async function sweep() {
       const kept = { ...releaseRecords() }; delete kept[r.address]; saveReleaseRecords(kept);
     } catch (e) { console.log(`T3 release cleanup: ${e}`); }
   }
+  if (shared("t3.auto-release") !== true) return;
   // Pin state predates the shared release state; read its native store until the list publishes it.
   let pins = shared("t3.pins");
   if (!pins) {

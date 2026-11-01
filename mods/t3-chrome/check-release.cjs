@@ -10,7 +10,7 @@ const source = (s) => s.replace(/^import .*;\r?\n/gm, "").replace(/export (async
   .replace(/export const /g, "const ").replace("export default class", "globalThis.Mod = class");
 
 function fixture(change = () => {}) {
-  const calls = [], state = { layout: "herdr-t3" };
+  const calls = [], state = { layout: "herdr-t3", "t3.auto-release": true };
   const record = (address, parent = null) => ({ address, parent, state: "live", status: { app: "pi", state: "idle" }, turn: 4,
     keep: address === "parent", labels: { "pi.session_file": `/sessions/${address}.jsonl`, "pi.session": address, settled: `${now - 1800001}:4` } });
   const core = [record("parent"), record("child", "parent"), record("grandchild", "child")];
@@ -66,6 +66,12 @@ function fixture(change = () => {}) {
 
 async function releaseChecks() {
   const fresh = () => fixture();
+  for (const setting of [undefined, false, "true", 1]) {
+    const f = fresh(); f.state["t3.auto-release"] = setting;
+    assert.equal(f.api.eligible(f.core, now, []), false, "only explicit true enables release");
+    await f.api.releaseTree("parent", null, []);
+    assert.equal(f.calls.length, 0, "default-off never reads or changes the tree");
+  }
   for (const [label, mutate] of [
     ["29 minutes", (f) => { f.core[0].labels.settled = `${now - 29 * 60000}:4`; }],
     ["new turn", (f) => { f.core[0].turn++; }],
@@ -94,6 +100,7 @@ async function releaseChecks() {
   }
   for (const [label, change] of [
     ["new work", ({ core }) => { core[1].status.state = "working"; }],
+    ["disabled", ({ state }) => { state["t3.auto-release"] = false; }],
     ["new turn", ({ core }) => { core[0].turn++; }],
     ["unsettled", ({ core }) => { delete core[0].labels.settled; }],
     ["opened", ({ shown }) => { shown.tab = "b0"; }],
@@ -131,6 +138,7 @@ async function releaseChecks() {
 async function resumeChecks() {
   const f = fixture();
   await f.api.releaseTree("parent", null, []);
+  f.state["t3.auto-release"] = false;
   const original = f.state["t3.released"].parent;
   const jobs = [], closed = [];
   const cx = { notify() {}, timer: { every() {} }, spawn(fn) { jobs.push(fn(cx)); } };

@@ -14,7 +14,7 @@ Only want the Settle sidebar? It is also published alone: [herdr-t3-focus](https
   - Spaces: repo, branch and ahead/behind only when they're unusual; worktrees folded under their checkout; grouped by machine once there's more than one.
   - Agents: grouped by space or by priority, pins, sub-agents nested under their parent.
   - Focus: T3-style Settle. Agents that need you stay up top as cards; finished ones are settled by hand into a quiet list and come back on new work. Busy agents fold into a Working shelf.
-- **Release settled Pi processes**: after 30 minutes in Settle, a hidden, unpinned Pi and its idle sub-agents can stop running. Their sessions and any pane positions are saved. Opening the tab reconnects the parent; sub-agents have a manual Resume button.
+- **Release settled Pi processes** (off by default): enable **T3 → Behavior → Auto release**. After 30 minutes in Settle, a hidden, unpinned Pi and its idle sub-agents can stop running. Their sessions and any pane positions are saved. Opening the tab reconnects the parent; sub-agents have a manual Resume button.
 - **Agent view** (`cmd-shift-a`, or the button left of `+`): the work area shows one agent full size instead of the active tab, and clicking in the sidebar picks which. The tab bar turns into a bar naming that agent; the scroll wheel walks agents. Anything that would land out of sight brings the tabs back: a new shell or split in this space (focused), starting something from `+`, moving focus to a shell. A new agent pane (often an agent starting another) doesn't take the view; it shows up in the sidebar.
 - **One name everywhere**: Focus cards, the agents list, tabs and pane headers name a terminal the same way: its Pi session, then a tab you named, then a telling terminal title, else the program. Two Pis in one tab read as their own sessions.
 - **The same status marks everywhere**: a spinner while working, `!` when blocked, a dot when done. While Focus shows, a settled agent's done dot leaves the tabs and pane headers too.
@@ -28,6 +28,7 @@ Ask your Herdr agent to add `herdr.dev/layouts/JinJieBeWater/herdr-t3`. By hand:
 ## Quick start
 
 - **Sidebar**: the button at the top right of the sidebar (or `cmd-shift-b`) switches between Spaces + Agents and Focus; the one next to it hides the sidebar.
+- **T3 settings**: the footer's `T3` button opens Focus border and Auto release settings. Auto release is off until you turn it on; turning it off stops new releases and keeps saved conversations reconnectable.
 - **Focus**: hover a finished card and click `✓ Settle` to put it away; new work brings it back, or click the undo arrow on its row.
 - **Released**: a dim `Released` label means the process has stopped. Click its card or tab to reconnect. Unsettle changes its place in the list; it reconnects when you open it. Working, blocked, pinned and visible conversations are kept running. Release runs only in this layout and only after you explicitly Settle; ordinary idle time does not count.
 - **Agent view**: the button left of `+` (or `cmd-shift-a`) shows one agent full size; click a card to change which. A new shell, split or anything from `+` brings the tabs back.
