@@ -2,7 +2,6 @@ import { View, div, svg, image } from "gpui-kit";
 import { h_flex } from "gpui-base";
 import { spaces, panes, agents, terminals, focused, run, openOverlay, theme, window, layout, settings, nextCommand } from "herdr";
 import { namer } from "./name.js";
-import { withReleased } from "./released.js";
 
 // With the focus list showing (t3-focus), an agent settled there isn't news: its done is left out.
 // One that works or gets stuck is unsettled there, so only done needs leaving out.
@@ -77,7 +76,7 @@ export default class Tabs extends View {
     const space = spaces().find(p => p.active);
     const shown = space?.tabs ?? [];
     const live = awake();
-    const ps = panes(), title = namer(), saved = withReleased().filter((a) => a.released);
+    const ps = panes(), title = namer();
     // The agent view keeps the keyboard on its agent, so a split or new tab would land unseen.
     // A new shell or mod pane in this space brings the tabs back, focused; a new agent's (often an agent
     // spawning one) doesn't take the view, the lists show it. Focus moved by keys follows the same split.
@@ -101,7 +100,7 @@ export default class Tabs extends View {
     const item = (c, i) => {
       // A tab nobody named reads as its lead pane: the agent in it, else the focused one.
       const mine = ps.filter(p => p.tab === c.id);
-      const lead = mine.find(p => p.status != null) ?? saved.find(a => a.tab === c.id && a.root === a.address) ?? saved.find(a => a.tab === c.id) ?? mine.find(p => p.focused) ?? mine[0];
+      const lead = mine.find(p => p.status != null) ?? mine.find(p => p.focused) ?? mine[0];
       const program = lead?.program;
       const name = c.named ? c.name : lead ? title(lead) : "Terminal";
       return h_flex().id(`tab-${c.id}`).h(28).px(8).gap(8).rounded(6).items_center().flex_none().text_size(13)
@@ -116,7 +115,6 @@ export default class Tabs extends View {
         .on_mouse_down("right", (_e, cx) => { cx.stop_propagation(); openOverlay({ mod: "menu", kind: "popup", width: 200, props: { tab: "tab", target: { id: c.id, space: space.id } } }); })
         .when(Boolean(program?.icon), el => el.child(program.tint ? svg(program.icon).size(14).text_color(t.muted) : image(program.icon).size(14)))
         .child(div().max_w(170).truncate().child(c.zoomed ? `${name} Z` : name))
-        .when(lead?.released, el => el.child(div().text_size(11).text_color(t.dim).child("Released")))
         .when(c.status === "working", el => el.child(svg("mods/workspace-chrome/spinner.svg").size(12).flex_none().text_color(t.working).spin(900)))
         .when(c.status === "blocked", el => el.child(blockedMark(t)))
         .when(c.status === "done" && live.some(a => a.tab === c.id && a.status === "done"), el => el.child(div().size(7).flex_none().rounded_full().bg(t.done)))

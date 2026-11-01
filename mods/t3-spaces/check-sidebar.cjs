@@ -85,8 +85,8 @@ function fixture(width) {
     const localStorage = { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value) };
     const read = file => fs.readFileSync(path.join(modRoot, name, file), "utf8");
     // name.js, the shared naming rule, is inlined as the mod's own copy is.
-    const source = (["released.js", "release.js", "name.js", "main.js"].filter(file => fs.existsSync(path.join(modRoot, name, file))).map(read).join("\n"))
-      .replace(/^import .*;\r?\n/gm, "").replace(/export (async )?function /g, "$1function ").replace(/export const /g, "const ")
+    const source = ((fs.existsSync(path.join(modRoot, name, "name.js")) ? read("name.js") + "\n" : "") + read("main.js"))
+      .replace(/^import .*;\r?\n/gm, "").replace(/export function /g, "function ")
       .replace("export default class", "globalThis.Mod = class");
     const context = vm.createContext({ ...env, localStorage, props: () => props, fs: fs.promises, appHome: () => path.dirname(modRoot) });
     vm.runInContext(source, context, { filename: name });
@@ -481,36 +481,6 @@ for (const width of [180, 200, 240, 268, 480]) {
   const actions = walk(head).find(n => n.items.some(child => child?.key === "ph-r-p0"));
   assert.equal(actions.style.gap, 4);
   assert.ok("flex_none" in actions.style, "narrow panes keep the action targets at their full size");
-}
-{
-  // Released conversations stay named, settled and clickable even after the live agent goes away.
-  const f = fixture(268);
-  const a = f.agents().splice(1, 1)[0];
-  f.terminals().find(k => k.address === a.address).state = "finished";
-  const record = { ...a, root: a.address, pane: "released-p2", resume: "/saved/pi.jsonl", session_name: "Saved conversation", settled: "1:0" };
-  f.state["t3.released"] = { [a.address]: record };
-  const fo = f.load("t3-focus"); fo.open = true;
-  let tree = fo.render(cx);
-  const slim = find(tree, "slim-vps/t2");
-  assert.ok(strings(slim).includes("Saved conversation") && strings(slim).includes("Released"));
-  fire(slim, "on_click", {}, cx);
-  assert.deepEqual(f.calls.splice(0).map(([name]) => name), ["space.select", "tab.select", "pane.focus"], "released click opens placeholder, not finished terminal");
-  record.settled = "";
-  tree = fo.render(cx);
-  assert.ok(strings(find(tree, "card-vps/t2")).includes("Released"), "Unsettle doesn't forget a released conversation");
-  assert.ok(strings(find(f.load("t3-agents").render(cx), "ag-vps/t2")).includes("Saved conversation"));
-  f.spaces()[0].active = false; f.spaces()[2].active = true;
-  f.spaces()[2].tabs[0].named = false;
-  f.panes().splice(1, 1, { pane: "released-p2", tab: "b2", terminal: null, mod: "t3-released" });
-  assert.ok(strings(find(f.load("t3-tabs").render(cx), "tab-b2")).includes("Saved conversation"), "unnamed mod-only tab retains session name");
-}
-{
-  const f = fixture(268), k = f.terminals().find(k => k.address === "t0"), ag = f.load("t3-agents");
-  k.labels = { "pi.session_file": "/sessions/stable.jsonl" };
-  ag.setPins(["t0"]); ag.render(cx);
-  assert.deepEqual(JSON.parse(f.stores.get("t3-agents").get("pins")), ["/sessions/stable.jsonl"]);
-  k.address = "replacement"; f.agents()[0].address = "replacement";
-  assert.ok(find(ag.render(cx), "pinned"), "pin follows Pi session across terminal addresses");
 }
 {
   // Icons: every UI glyph drawn is a file that exists.

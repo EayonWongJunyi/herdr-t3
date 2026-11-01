@@ -27,14 +27,12 @@ const copy = x => JSON.parse(JSON.stringify(x));
 const component = { new: id => element().id(id) };
 const cx = { notify() {} };
 let root = JSON.parse(fs.readFileSync(path.join(__dirname, "../../layouts/herdr-t3.json"), "utf8"));
-const calls = [], overlays = [], closed = [], state = {}, writes = [];
+const calls = [], overlays = [], closed = [];
 const env = {
   View: class {}, div: element, svg: element, h_flex: element, v_flex: element,
   Switch: component, Button: component, props: () => ({ footer: true, overlay: "test-settings" }),
   theme: () => ({}), updates: () => ({ app: { ready: true } }),
   layout: () => copy(root),
-  shared: key => state[key],
-  setShared: (key, value) => { state[key] = value; writes.push([key, value]); },
   run: (name, args) => { calls.push(name); if (name === "layout.set") root = copy(args.layout); },
   openOverlay: spec => overlays.push(copy(spec)),
   closeOverlay: id => closed.push(id),
@@ -52,16 +50,6 @@ const original = copy(root);
 const settings = load(path.join(__dirname, "main.js"));
 assert.equal(find(settings.render(), "focus-border").style.checked, true);
 assert.deepEqual(calls, [], "render never writes the layout");
-assert.deepEqual(writes, [], "render never enables release");
-assert.equal(find(settings.render(), "auto-release").style.checked, false, "auto release defaults off");
-const setRelease = enabled => find(settings.render(), "auto-release").handlers.on_change(enabled, cx);
-setRelease(true);
-assert.equal(state["t3.auto-release"], true);
-assert.equal(find(load(path.join(__dirname, "main.js")).render(), "auto-release").style.checked, true, "reopening keeps the explicit choice");
-setRelease(false);
-assert.equal(find(settings.render(), "auto-release").style.checked, false);
-assert.deepEqual(root, original, "auto release changes no layout fields");
-assert.deepEqual(calls, [], "auto release never invokes a layout command");
 const toggle = enabled => find(settings.render(), "focus-border").handlers.on_change(enabled, cx);
 toggle(false);
 const expected = copy(original); pane(expected).focus.color = "background";
@@ -90,4 +78,4 @@ const count = calls.length;
 assert.equal(find(settings.render(), "focus-border").style.disabled, true);
 toggle(false);
 assert.equal(calls.length, count);
-console.log("ok: independent settings buttons; focus border preserves layout; auto release defaults off, persists and never changes layout; render never writes; stale clicks preserve current layout.");
+console.log("ok: independent settings buttons; focus border preserves layout; render never writes; stale clicks preserve current layout.");

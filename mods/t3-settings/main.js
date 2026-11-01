@@ -1,6 +1,6 @@
 import { View, div, svg } from "gpui-kit";
 import { h_flex, v_flex, Switch, Button } from "gpui-base";
-import { theme, layout, run, props, closeOverlay, shared, setShared } from "herdr";
+import { theme, layout, run, props, closeOverlay } from "herdr";
 
 function frame(node) {
   if (node?.id === "main" && node.content?.pane?.header?.content?.mod === "t3-pane") return node.content.pane;
@@ -34,21 +34,6 @@ export default class Settings extends View {
         .child(div().w(34).h(20).p(2).flex_none().rounded_full().bg(on ? t.accent : t.hover)
           .flex().when(on, el => el.justify_end())
           .child(div().size(16).rounded_full().bg(on ? t.accent_foreground : t.muted)));
-    const auto = shared("t3.auto-release") === true;
-    const release = Switch.new("auto-release").checked(auto)
-      .accessibility_label("Auto release")
-      .w_full().h(92).px(16).flex().items_center().gap(24).rounded(8)
-      .bg(t.background).border(1).border_color(t.border).text_color(t.foreground)
-      .on_change((enabled, cx) => {
-        setShared("t3.auto-release", enabled === true);
-        cx.notify();
-      })
-      .child(v_flex().flex_1().min_w(0).gap(6)
-        .child(div().font_medium().child("Auto release (Pi only)"))
-        .child(div().text_size(12).text_color(t.muted).child("Release idle Pi agents after 30 minutes in Settle.")))
-      .child(div().w(34).h(20).p(2).flex_none().rounded_full().bg(auto ? t.accent : t.hover)
-        .flex().when(auto, el => el.justify_end())
-        .child(div().size(16).rounded_full().bg(auto ? t.accent_foreground : t.muted)));
     return v_flex().id("t3-settings-page").size_full().bg(t.popover).text_size(13).text_color(t.foreground)
       .child(h_flex().h(76).flex_none().px(24).items_center().border_b(1).border_color(t.border)
         .child(v_flex().flex_1().gap(4)
@@ -61,9 +46,7 @@ export default class Settings extends View {
           .child(svg("mods/pane/close.svg").size(14))))
       .child(v_flex().flex_1().min_h(0).p(24).gap(12)
         .child(div().text_size(12).font_medium().text_color(t.muted).child("Appearance"))
-        .child(toggle)
-        .child(div().mt(8).text_size(12).font_medium().text_color(t.muted).child("Behavior"))
-        .child(release))
+        .child(toggle))
       .child(h_flex().h(48).flex_none().px(24).items_center().border_t(1).border_color(t.border)
         .child(div().text_size(11).text_color(t.dim).child("Changes apply immediately.")));
   }

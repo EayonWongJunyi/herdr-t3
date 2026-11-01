@@ -1,7 +1,6 @@
 import { View, div, svg } from "gpui-kit";
 import { h_flex, v_flex, Button } from "gpui-base";
 import { theme, run, props, updates, layout, nextCommand, openOverlay } from "herdr";
-import { sweep } from "./release.js";
 
 function find(node, id) {
   if (node?.id === id) return node;
@@ -20,15 +19,6 @@ export default class WorkspaceChrome extends View {
   init(_props, cx) {
     // Only the brand bar's copy takes `t3-chrome.sidebar`; the footer's has nothing to switch.
     if (props()?.footer) return;
-    cx.timer.every(60000, (cx) => {
-      if (this.sweeping) return;
-      this.sweeping = true;
-      cx.spawn(async () => {
-        try { await sweep(); }
-        catch (e) { console.log(`T3 release: ${e}`); }
-        finally { this.sweeping = false; }
-      });
-    });
     cx.spawn(async (cx) => {
       for (;;) {
         if (await nextCommand() === "sidebar") switchSidebar();
