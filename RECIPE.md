@@ -32,7 +32,7 @@ Left to right, divider 1px `border`:
 
 ## Built from
 
-- `layouts/t3.json`: `row` root → `sidebar` column [`brand` block `t3-chrome`; `sidebar-lists` stack [`lists` column [`spaces` `t3-spaces`, `agents` `t3-agents`], `focus` `t3-focus`]; `sidebar-footer` `t3-chrome` with props `{ "footer": true }`] and `work` column [`tabs` `t3-tabs`; `work-body` row [`main` `{ "tab": "active", "pane": { "header": { "content": { "mod": "t3-pane" } } } }`]; `work-bottom-inset`; `status` `workspace-status`, hidden]. Preview: `layouts/t3.svg`.
+- `layouts/t3.json`: `row` root → `sidebar` column [`brand` block `t3-chrome`; `sidebar-lists` stack [`lists` column [`spaces` `t3-spaces`, `agents` `t3-agents`], `focus` `t3-focus` with props `{ "newMenu": "t3-new-menu" }`]; `sidebar-footer` `t3-chrome` with props `{ "footer": true }`] and `work` column [`tabs` `t3-tabs`; `work-body` row [`main` `{ "tab": "active", "pane": { "header": { "content": { "mod": "t3-pane" } } } }`]; `work-bottom-inset`; `status` `workspace-status`, hidden]. Preview: `layouts/t3.svg`.
 - Mods: `t3-chrome`, `t3-spaces`, `t3-agents`, `t3-focus`, `t3-tabs`, `t3-pane` and `t3-new-menu` are reworked from Herdr's shipped `workspace-chrome`, `spaces`, `agents`, `tabs`, `pane` and `new-menu`; `t3-focus` is new. Shipped mods used as they are: `workspace-status`, `picker`, `menu`, and icons from `mods/workspace-chrome/` and `mods/pane/close.svg`.
 - `keys.json`: `layout:t3` → `cmd-shift-b`: `t3-chrome.sidebar`.
 - Programs: `t3-spaces` runs read-only `git status` / `git rev-parse` (no optional locks, no fsmonitor) and `hc machine ls --json`; `t3-focus` runs `hc label <agent> settled=<ms>:<turn>`.

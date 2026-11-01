@@ -51,7 +51,7 @@
             {
               "id": "focus",
               "type": "block",
-              "content": { "mod": "t3-focus" }
+              "content": { "mod": "t3-focus", "props": { "newMenu": "t3-new-menu" } }
             }
           ]
         },

@@ -5,11 +5,11 @@
 
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex, Popover, InputState, Input } from "gpui-base";
-import { agents, terminals, panes, spaces, run, hc, notify, theme, shared, setAgentOrder } from "herdr";
+import { agents, terminals, panes, spaces, run, hc, notify, theme, shared, setAgentOrder, props } from "herdr";
 
 const RANK = { blocked: 4, done: 3, working: 2, idle: 1 };
 const BUSY = new Set(["working", "blocked"]);
-// Space avatar colors, as t3-spaces draws them.
+// Space avatar colors, as the Herdr T3 layout's t3-spaces draws them (shared "space.colors").
 const MARK = { ansi6: "#22a99a", ansi3: "#e3814f", ansi4: "#5b8def", ansi5: "#8b7cf6", ansi2: "#3fae6a", ansi1: "#d9649a" };
 // The settled tail opens on this many, then grows by MORE.
 const FIRST = 10, MORE = 25;
@@ -354,7 +354,8 @@ export default class Focus extends View {
         .child(div().child("Search")))
       .child(filter)
       .child(tool("focus-new-space", "New space", "folder-plus", () => run("space.new")))
-      .child(tool("focus-new-agent", "New agent", "square-pen", () => run("mod.open", { name: "t3-new-menu" })));
+      // The layout passes its own menu; docked alone, the shipped one.
+      .child(tool("focus-new-agent", "New agent", "square-pen", () => run("mod.open", { name: props()?.newMenu ?? "new-menu" })));
 
     return v_flex().id("t3-focus-root").size_full().min_h(0).bg(t.chrome).text_size(13)
       .child(top)
