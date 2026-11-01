@@ -277,6 +277,25 @@ for (const width of [180, 200, 240, 268, 480]) {
   k.labels = { settled: value.slice(8) };
   const at = fo.render(run);
   assert.ok(!find(at, "card-vps/t2") && strings(find(at, "settled-header")).includes("1"), "settled leaves the cards for the tail");
+  {
+    // Clear asks once on the button, then closes settled panes; a space left empty closes whole.
+    const later = { ...run, timer: { after() {} } }, n = f.calls.length;
+    f.spaces()[0].tabs[0].active = true;
+    fire(find(fo.render(later), "settled-clear"), "on_click", {}, later);
+    assert.equal(f.calls.length, n, "the first click only asks");
+    assert.deepEqual(strings(find(fo.render(later), "settled-clear")), ["Clear 1?"]);
+    f.panes().push({ pane: "p9", tab: "b2", terminal: "t9" });
+    fire(find(fo.render(later), "settled-clear"), "on_click", {}, later);
+    assert.deepEqual(f.calls.splice(n), [["pane.close", { pane: "p2" }], ["space.select", { id: "s0" }], ["tab.select", { id: "b0" }]], "another pane keeps the space");
+    f.panes().pop();
+    fire(find(fo.render(later), "settled-clear"), "on_click", {}, later);
+    fire(find(fo.render(later), "settled-clear"), "on_click", {}, later);
+    assert.deepEqual(f.calls.splice(n), [["tab.new", { space: "s2", folder: "/work/s2" }], ["pane.close", { pane: "p2" }],
+      ["space.select", { id: "s0" }], ["tab.select", { id: "b0" }]], "an emptied space keeps a fresh shell tab where its terminal was, not where the space began");
+    remote.focused = true;
+    assert.equal(find(fo.render(later), "settled-clear"), null, "the agent in view is never cleared");
+    remote.focused = false;
+  }
   remote.focused = true;
   fo.render(run);
   assert.equal(f.labelled.length, 0, "looking doesn't bring it back");
