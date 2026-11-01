@@ -19,7 +19,7 @@ function fixture(change = () => {}) {
   const shown = { tab: "other", agent: "other" };
   const reply = (value) => ({ code: 0, stdout: JSON.stringify(value), stderr: "" });
   const env = { console, agents: () => agents, terminals: () => core, panes: () => panes,
-    spaces: () => [{ id: "s0", tabs: [{ id: "b0" }] }], focused: () => shown,
+    spaces: () => [{ id: "s0", tabs: [{ id: "b0" }] }], focused: () => shown, machines: () => [],
     shared: (key) => state[key], setShared: (key, value) => { state[key] = value; },
     hc: async (args) => {
       if (args[0] === "run") assert.ok(args.indexOf("--json") < args.indexOf("--"), "Core flags must not become Node arguments");
@@ -60,7 +60,7 @@ function fixture(change = () => {}) {
     },
   };
   const context = vm.createContext(env);
-  vm.runInContext(source(read("t3-focus", "released.js") + "\n" + read("t3-chrome", "release.js")) + "\nglobalThis.api = { eligible, releaseTree, pinKey };", context);
+  vm.runInContext(source(read("t3-focus", "released.js") + "\n" + read("t3-chrome", "release.js")) + "\nglobalThis.api = { eligible, releaseTree, pinKey, sweep };", context);
   return { core, state, calls, shown, panes, agents, env, api: context.api };
 }
 
@@ -87,6 +87,7 @@ async function releaseChecks() {
     ["pinned old address", (f) => { f.state["t3.pins"] = ["parent"]; }],
     ["other layout", (f) => { f.state.layout = "main"; }],
     ["bad settle label", (f) => { f.core[0].labels.settled = "0:4:extra"; }],
+    ["reconnected recently", (f) => { f.core[0].created_ms = now - 29 * 60000; }],
   ]) {
     const f = fresh(); mutate(f);
     assert.equal(f.api.eligible(f.core, now, []), false, label);
@@ -97,6 +98,12 @@ async function releaseChecks() {
     assert.equal(f.api.eligible(f.core, now, []), true, "30 minutes exactly");
     f.core[0].address = "vps/parent";
     assert.equal(f.api.pinKey(f.core[0]), "vps:/sessions/parent.jsonl", "machine scopes stable pins");
+  }
+  for (const [minutes, reads] of [[29, false], [31, true]]) {
+    const f = fresh(); f.state["t3.pins"] = [];
+    f.core[0].labels.settled = `${now - minutes * 60000}:4`;
+    await f.api.sweep();
+    assert.equal(f.calls.some((c) => c[0] === "hc"), reads, `sweep reads the tree only once Settle could qualify (${minutes} min)`);
   }
   for (const [label, change] of [
     ["new work", ({ core }) => { core[1].status.state = "working"; }],

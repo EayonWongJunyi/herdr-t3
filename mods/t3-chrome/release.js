@@ -44,6 +44,8 @@ export function eligible(tree, now, pins) {
   if (!root || tree.some((k) => k.state !== "live" || k.rm || k.status?.app !== "pi" || !quiet(k) || !k.labels?.["pi.session_file"] || pins.includes(pinKey(k)) || pins.includes(k.address))) return false;
   const settled = (root.labels?.settled ?? "").split(":").map(Number);
   if (settled.length !== 2 || !settled.every(Number.isFinite) || settled[0] <= 0 || now - settled[0] < DELAY || root.turn !== settled[1]) return false;
+  // A reconnected Pi keeps its old Settle time; give it the same 30 minutes before releasing it again.
+  if (now - (root.created_ms ?? 0) < DELAY) return false;
   const shown = focused();
   const ids = new Set(tree.map((k) => k.address));
   if (ids.has(shown?.agent) || ids.has(shown?.terminal) || ids.has(shown?.shown)) return false;
@@ -143,7 +145,8 @@ export async function sweep() {
   }
   for (const a of agents()) {
     const k = terminals().find((k) => k.address === a.address);
-    if (!k?.labels?.settled) continue;
+    // Cheap local check first: the full tree read below costs several Core calls per agent.
+    if (!(Date.now() - Number(k?.labels?.settled?.split(":")[0]) >= DELAY)) continue;
     const machine = spaces().find((s) => s.id === a.space)?.machine ?? null;
     try { await releaseTree(a.address, machine, pins); }
     catch (e) { notify({ title: "Couldn't release the agent", body: String(e), level: "error" }); }

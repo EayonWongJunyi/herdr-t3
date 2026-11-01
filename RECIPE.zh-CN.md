@@ -45,7 +45,7 @@ Herdr App 的一个安静、近似 T3 Code 的窗口：左侧 268px 侧栏，可
 - `keys.json`：`layout:herdr-t3` → `cmd-shift-b`：`t3-chrome.sidebar`，`cmd-shift-a`：`t3-tabs.view`。
 - `t3-settings`：使用原生 Switch。Focus border 只在点击时改变最新布局中的焦点颜色；Auto release 将布尔值保存到共享状态。渲染不改布局，也不启用设置。
 - 运行的程序：`t3-spaces` 运行只读的 `git status` / `git rev-parse`（不加可选锁、不用 fsmonitor）和 `hc machine ls --json`；`t3-focus` 运行 `hc label <agent> settled=<ms>:<turn>`。
-- `t3-chrome/release.js` 每分钟在本布局检查一次，用 `hc ls/get/label/kill/rm` 保存并结束 Pi 树，清理标签关闭后的旧记录。`t3-released` 读取最后的输出，在保存的位置执行 `pane.split {argv:["pi","--session",file]}`。等新 Pi 上报完全相同的 `pi.session_file` 才移除旧 Core 记录和占位；保留 Settle 时间，轮次改用新终端的计数。失败时保留恢复信息并提供 Retry。
+- `t3-chrome/release.js` 每分钟在本布局检查一次，用 `hc ls/get/label/kill/rm` 保存并结束 Pi 树，清理标签关闭后的旧记录。`t3-released` 读取最后的输出，在保存的位置执行 `pane.split {argv:["pi","--session",file]}`。等新 Pi 上报完全相同的 `pi.session_file` 才移除旧 Core 记录和占位；保留 Settle 时间，轮次改用新终端的计数；新 Pi 从自身启动（`created_ms`）起满 30 分钟才会再次被回收。失败时保留恢复信息并提供 Retry。
 - `scripts/sync.sh` 将 `mods/t3-focus/released.js` 复制到列表、品牌栏和占位 mod。释放记录保存在共享状态 `t3.released`、占位 props 和 Core 的 `t3.resume`、`t3.released`、`t3.record` 标签中；共享记录保存实际占位 pane id。置顶以机器和 Pi 会话路径识别，接回换地址后仍有效。独立侧栏不运行释放循环。
 - 接回前通过 `hc run --rm --no-parent --no-notify --bg --name … -- node -e 'setTimeout(()=>{},60000)'` 占用 Core 唯一的 live 名称 `t3-resume-<旧id>`。竞争失败的客户端等待并复用 replacement 标签，成功的一方在 `finally` 清理占用。按当前屏幕的 space UUID 和 machine 转换保存的 id 后再查询 Core，props 本身不带机器前缀转换。启动中的查询只走一秒定时器，不从 render 发起。
 
