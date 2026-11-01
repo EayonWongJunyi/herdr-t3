@@ -1,6 +1,6 @@
 import { View, div, svg, image } from "gpui-kit";
-import { h_flex, Button } from "gpui-base";
-import { spaces, panes, agents, terminals, focused, run, openOverlay, theme, window, layout, settings, nextCommand, appHome, readTextFile, watchFolder } from "herdr";
+import { h_flex } from "gpui-base";
+import { spaces, panes, agents, terminals, focused, run, openOverlay, theme, window, layout, settings, nextCommand } from "herdr";
 import { namer } from "./name.js";
 import { withReleased } from "./released.js";
 
@@ -34,14 +34,6 @@ function find(node, id) {
 export default class Tabs extends View {
   init(_props, cx) {
     this.pressed = null;
-    cx.spawn(async (cx) => {
-      const mods = `${appHome()}/mods`;
-      for (;;) {
-        this.review = await readTextFile(`${mods}/pulls-review/mod.json`) !== null;
-        cx.notify();
-        await watchFolder(mods);
-      }
-    });
     // `t3-tabs.view` (cmd-shift-a in keys.json) switches between the tabs and the agent view.
     cx.spawn(async (cx) => {
       for (;;) {
@@ -144,17 +136,6 @@ export default class Tabs extends View {
       .when(Boolean(find(root, "view")), el => el.child(button("view-toggle", svg(`mods/workspace-chrome/${agentView() ? "layers" : "square"}.svg`).size(14), switchView)
         .role("button").accessibility_label(agentView() ? "Show tabs" : "Show one agent")))
       .child(button("tab-new", svg("mods/workspace-chrome/plus.svg").size(14), () => run("mod.open", { name: "t3-new-menu" })))
-      .when(this.review, el => el.child(h_flex().gap(0).items_center()
-        .child(Button.new("pulls-review").size(26).flex_none().flex().items_center().justify_center().rounded(6)
-          .text_color(t.dim).hover(s => s.bg(t.hover).text_color(t.foreground))
-          .accessibility_label("Review repository in pulls.review").tooltip("Review repository in pulls.review")
-          .on_mouse_down("left", stop).on_click(() => run("mod.open", { name: "pulls-review" }))
-          .child(svg("mods/workspace-chrome/git-compare.svg").size(14)))
-        .child(Button.new("pulls-review-options").w(20).h(26).flex_none().flex().items_center().justify_center().rounded(6)
-          .text_color(t.dim).hover(s => s.bg(t.hover).text_color(t.foreground))
-          .accessibility_label("Review opening options").tooltip("Review opening options")
-          .on_mouse_down("left", stop).on_click(() => openOverlay({ mod: "pulls-review", kind: "popup", width: 260, height: 132, props: { configure: true } }))
-          .child(svg("mods/workspace-chrome/chevron-down.svg").size(12)))))
       .when(w?.buttons, el => el.child(button("minimize", w.platform === "windows" ? svg("mods/t3-tabs/win-min.svg").size(16) : "−", () => run("window.minimize")))
         .child(button("maximize", w.platform === "windows" ? svg(`mods/t3-tabs/${w.maximized ? "win-restore" : "win-max"}.svg`).size(16) : "□", () => run("window.maximize")))
         .child(button("close-window", w.platform === "windows" ? svg("mods/t3-tabs/win-close.svg").size(16) : svg("mods/pane/close.svg").size(13), () => run("window.close"))));
