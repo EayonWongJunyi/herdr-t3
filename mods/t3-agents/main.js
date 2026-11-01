@@ -32,11 +32,13 @@ export default class Agents extends View {
     this.folded = JSON.parse(localStorage.getItem("folded") ?? "{}");
     // Each agent's last state and when it changed (ms), kept across restarts.
     this.changed = JSON.parse(localStorage.getItem("changed") ?? "{}");
+    // Older installs kept pins in this list's storage; move them over once, before the focus list writes any.
+    if (shared("agents.pins") == null && localStorage.getItem("pins")) setShared("agents.pins", JSON.parse(localStorage.getItem("pins")));
   }
 
-  // Shared with the focus list (t3-focus): one set of pins. Older installs kept them in this list's storage.
+  // Shared with the focus list (t3-focus): one set of pins.
   get pins() {
-    return shared("agents.pins") ?? JSON.parse(localStorage.getItem("pins") ?? "[]");
+    return shared("agents.pins") ?? [];
   }
 
   isFolded(id, initial = true) {

@@ -45,7 +45,7 @@ function fire(node, event, ...args) {
 }
 
 const modRoot = path.dirname(__dirname);
-const cx = { notify() {}, stop_propagation() {}, spawn() {}, timer: { every() {} }, focus_handle: () => ({ focus() {} }) };
+const cx = { notify() {}, stop_propagation() {}, spawn() {}, timer: { every() {} }, focus_handle: () => { let gone = false; return { focus() { assert.ok(!gone, "a released FocusHandle throws when used"); }, is_focused: () => false, release() { gone = true; return true; } }; } };
 function fixture(width) {
   const program = { key: "pi", name: "Pi", agent: true, tint: true, icon: "icons/pi.svg" };
   const tabs = ["local task", "second task", "remote task"].map((name, i) => ({ id: `b${i}`, name, named: true }));
@@ -326,38 +326,144 @@ for (const width of [180, 200, 240, 268, 480]) {
 }
 
 {
-  // Pins are one set with the agents list: dragging onto Pinned pins, within it reorders, onto Active unpins.
-  const f = fixture(268), fo = f.load("t3-focus");
-  for (const a of f.agents()) a.status = "done";
+  // Dragging, as T3's sidebar: labels and gaps open only while a row is lifted; Pinned pins and reorders,
+  // Active unpins and unsettles, Settled settles; empty sections take drops; Esc, leaving, or a row
+  // vanishing put it back; Working never lifts; a sweep from Settle or undo takes a run of rows along.
+  const f = fixture(268), run = { ...cx, spawn: fn => { fn(run); } }, fo = f.load("t3-focus");
+  for (const a of f.agents()) { a.status = "done"; a.focused = false; }
   for (const k of f.terminals()) if (k.parent) k.status = "idle";
-  const at = (y) => ({ position: { x: 0, y } });
-  const drag = (from, to) => {
-    fire(find(fo.render(cx), from), "on_mouse_down:left", at(0), cx);
-    fire(find(fo.render(cx), from), "on_mouse_move", at(10), cx);
-    fire(find(fo.render(cx), to), "on_mouse_move", at(20), cx);
-    fire(find(fo.render(cx), to), "on_mouse_up:left", {}, cx);
+  const t0 = f.terminals().find(k => k.address === "t0");
+  const pins = () => [...(f.state["agents.pins"] ?? [])];
+  const root = () => fo.render(run);
+  const h = (id) => find(root(), id)?.style.h;
+  const badge = (v) => find(find(root(), "drag-ghost"), `badge-${v}`);
+  // Press 10px into an 80px row, then move: the sidebar sees the pointer at y.
+  const lift = (from, y = 20) => {
+    fire(find(root(), from), "on_mouse_down:left", { position: { x: 0, y: 0 }, local_position: { x: 0, y: 10 }, bounds: { height: 80 } }, run);
+    fire(root(), "on_mouse_move", { position: { x: 0, y }, local_position: { x: 0, y: 100 + y } }, run);
   };
-  fire(find(fo.render(cx), "card-t0"), "on_mouse_down:left", at(0), cx);
-  fire(find(fo.render(cx), "card-t0"), "on_mouse_move", at(2), cx);
-  assert.equal(find(fo.render(cx), "pinned"), null, "a click's jitter isn't a drag, and nothing pinned shows no header");
-  fire(find(fo.render(cx), "card-t0"), "on_mouse_up:left", {}, cx);
-  drag("card-vps/t2", "pinned");
-  assert.deepEqual([...f.state["agents.pins"]], ["vps/t2"], "the Pinned header shows while dragging and takes the drop");
+  const over = (to, y = 10) => fire(find(root(), to), "on_mouse_move", { local_position: { x: 0, y }, bounds: { height: 80 } }, run);
+  const release = () => fire(root(), "on_mouse_up:left", {}, run);
+  const drag = (from, to, y) => { lift(from); over(to, y); release(); };
+
+  assert.equal(h("pinned"), 0, "no Pinned or Active label until something is lifted");
+  f.shown.pane = "p9";
+  lift("card-t0", 5);
+  assert.equal(find(root(), "drag-ghost"), null, "under 6px it's still a click");
+  release();
+  lift("card-vps/t2");
+  assert.ok(find(find(root(), "drag-ghost"), "ghost-card-vps/t2"), "the lifted card follows the pointer");
+  assert.equal(find(root(), "drag-ghost").style.top, 110, "the pressed spot stays under the pointer");
+  assert.equal(h("pinned"), 24); assert.equal(h("active"), 24, "the labels open while it's lifted");
+  assert.equal(h("hold-vps/t2"), 82, "it holds its place, spacing included");
+  assert.equal(badge("pin"), null, "over its own section it says nothing");
+  over("pinned");
+  assert.equal(h("hold-vps/t2"), 0, "headed elsewhere, its place folds");
+  assert.equal(h("gap-head-pinned"), 82, "and empty Pinned opens a gap under its label");
+  assert.ok(badge("pin"), "the lifted card says Pin");
+  release();
+  assert.deepEqual(pins(), ["vps/t2"]);
   assert.ok(find(f.load("t3-agents").render(cx), "pinned"), "the agents list shows the same pin");
-  assert.ok(find(fo.render(cx), "active"), "an Active divider follows the pins");
-  drag("card-t0", "card-vps/t2");
-  assert.deepEqual([...f.state["agents.pins"]], ["t0", "vps/t2"], "dropped on a pin, it lands above it");
-  drag("card-t0", "card-vps/t2");
-  assert.deepEqual([...f.state["agents.pins"]], ["vps/t2", "t0"], "a pin moved down lands below");
-  drag("card-t0", "active");
-  assert.deepEqual([...f.state["agents.pins"]], ["vps/t2"], "onto Active unpins");
-  fire(find(fo.render(cx), "card-t0"), "on_mouse_down:left", at(0), cx);
-  fire(find(fo.render(cx), "card-t0"), "on_mouse_move", at(10), cx);
-  fire(fo.render(cx), "on_hover", false, cx);
-  fire(find(fo.render(cx), "pinned"), "on_mouse_up:left", {}, cx);
-  assert.deepEqual([...f.state["agents.pins"]], ["vps/t2"], "leaving the sidebar cancels the drag");
-  fire(find(fo.render(cx), "card-vps/t2"), "on_hover", true, cx);
-  assert.equal(find(fo.render(cx), "settle-vps/t2"), null, "a pin isn't settled away");
+  assert.deepEqual(f.calls.pop(), ["pane.focus", { pane: "p9" }], "letting go hands the keyboard back to the pane that had it");
+  assert.equal(h("pinned"), 0, "the labels close again");
+  assert.ok(walk(find(root(), "card-vps/t2")).some(n => n.source === "mods/workspace-chrome/pin.svg"), "a pin shows its glyph");
+
+  lift("card-t0"); over("card-vps/t2", 10);
+  assert.equal(h("gap-vps/t2"), 82, "the upper half of a pin opens a gap above it");
+  over("card-vps/t2", 60);
+  assert.equal(h("gap-vps/t2"), 0);
+  assert.equal(h("gap-end-pinned"), 82, "the lower half opens it below");
+  assert.deepEqual(JSON.parse(JSON.stringify(find(root(), "gap-end-pinned").style.transition)), ["height", { duration: 150, easing: "ease-out" }], "gaps slide natively");
+  release();
+  assert.deepEqual(pins(), ["vps/t2", "t0"]);
+  lift("card-t0"); over("card-vps/t2", 10);
+  assert.equal(badge("pin"), null, "reordering pins says nothing");
+  release();
+  assert.deepEqual(pins(), ["t0", "vps/t2"], "within Pinned it reorders");
+  drag("card-t0", "card-t0", 70);
+  assert.deepEqual(pins(), ["t0", "vps/t2"], "back over its own place, nothing changes");
+
+  lift("card-t0");
+  assert.ok(find(root(), "active-placeholder"), "empty Active shows a dashed drop target");
+  over("active-placeholder");
+  assert.equal(find(root(), "active-placeholder"), null);
+  assert.equal(h("gap-head-active"), 82, "targeted, it opens a gap instead");
+  assert.ok(badge("unpin"));
+  release();
+  assert.deepEqual(pins(), ["vps/t2"], "onto Active unpins");
+
+  lift("card-t0");
+  assert.ok(find(root(), "settled-header") && find(root(), "settled-placeholder"), "Settled shows while dragging, even empty");
+  over("settled-header");
+  assert.ok(badge("settle"));
+  release();
+  const [, addr, value] = f.labelled.pop();
+  assert.equal(addr, "t0");
+  assert.match(value, /^settled=\d+:/, "dropped on Settled, it's settled");
+  t0.labels = { settled: value.slice(8) };
+  fo.open = true;
+  lift("slim-t0");
+  assert.ok(find(find(root(), "drag-ghost"), "ghost-slim-t0"), "a settled row lifts as its row");
+  over("card-vps/t2", 10);
+  assert.equal(h("gap-vps/t2"), 84, "the gap is the destination's: a card");
+  assert.ok(badge("pin"), "a settled row can be pinned");
+  over("active");
+  assert.equal(h("gap-head-active"), 84);
+  assert.ok(badge("unsettle"));
+  release();
+  assert.deepEqual(f.labelled.pop(), ["label", "t0", "settled="], "dropped on Active, it's unsettled");
+  assert.deepEqual(pins(), ["vps/t2"]);
+  lift("card-t0");
+  assert.equal(find(root(), "drag-ghost"), null, "a row whose change hasn't landed yet stays put");
+  release();
+  t0.labels = {};
+
+  f.state["agents.pins"] = [];
+  fire(find(root(), "card-t0"), "on_hover", true, run);
+  const settleButton = find(root(), "settle-t0");
+  fire(settleButton, "on_mouse_down:left", { position: { x: 0, y: 0 } }, { ...run, stop_propagation() {} });
+  fire(root(), "on_mouse_move", { position: { x: 0, y: 20 }, local_position: { x: 0, y: 120 } }, run);
+  over("card-vps/t2");
+  assert.ok(find(find(root(), "card-t0"), "badge-settle") && find(find(root(), "card-vps/t2"), "badge-settle"), "a sweep from Settle marks the run");
+  assert.equal(find(root(), "drag-ghost"), null, "a sweep lifts nothing");
+  release();
+  assert.deepEqual(f.labelled.splice(0).map(([, a, v]) => [a, v.split("=")[0]]).sort(), [["t0", "settled"], ["vps/t2", "settled"]], "letting go settles every marked row");
+  fire(settleButton, "on_click", {}, run);
+  assert.equal(f.labelled.length, 0, "the button's click after a sweep doesn't settle again");
+  for (const k of [t0, f.terminals().find(k => k.address === "vps/t2")]) k.labels = { settled: `${Date.now()}:0` };
+
+  const n = f.labelled.length;
+  lift("slim-vps/t2"); over("active");
+  fire(root(), "on_key_down", { keystroke: "escape" }, run);
+  assert.equal(find(root(), "drag-ghost"), null, "Esc puts it back");
+  release();
+  lift("slim-vps/t2"); over("active");
+  fire(root(), "on_hover", false, run);
+  release();
+  const before = f.calls.length;
+  lift("slim-vps/t2"); over("active");
+  const gone = f.agents().splice(1, 1)[0];
+  assert.equal(find(root(), "drag-ghost"), null, "a row that leaves the list ends the drag");
+  f.agents().push(gone);
+  release();
+  assert.deepEqual(f.calls.slice(before), [["pane.focus", { pane: "p9" }]], "and the release still hands the keyboard back");
+  assert.equal(f.labelled.length, n, "none of those changed anything");
+  const calls = f.calls.length;
+  lift("slim-vps/t2"); over("slim-vps/t2");
+  fire(find(root(), "slim-vps/t2"), "on_click", {}, run);
+  release();
+  assert.ok(!f.calls.slice(calls).some(([name]) => name === "agent.focus"), "a drag's release doesn't open the row");
+
+  const old = fixture(268);
+  old.stores.set("t3-agents", new Map([["pins", '["t0"]']]));
+  old.load("t3-agents");
+  assert.deepEqual([...old.state["agents.pins"]], ["t0"], "older pins move to the shared set, so a drag in Focus keeps them");
+
+  const w = fixture(268), wf = w.load("t3-focus");
+  for (const k of w.terminals()) if (k.parent) k.status = "idle";
+  fire(find(wf.render(cx), "card-t0"), "on_mouse_down:left", { position: { x: 0, y: 0 }, local_position: { x: 0, y: 10 }, bounds: { height: 80 } }, cx);
+  fire(wf.render(cx), "on_mouse_move", { position: { x: 0, y: 30 }, local_position: { x: 0, y: 130 } }, cx);
+  assert.equal(find(wf.render(cx), "drag-ghost"), null, "a working card doesn't lift");
 }
 
 {
