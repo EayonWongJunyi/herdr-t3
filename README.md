@@ -23,3 +23,9 @@ No network requests.
 ## Credits and license
 
 `t3-chrome`, `t3-spaces`, `t3-agents`, `t3-tabs`, `t3-pane`, `t3-new-menu` and the layout start from Herdr App's shipped `workspace-chrome`, `spaces`, `agents`, `tabs`, `pane`, `new-menu` and `main`. Settle follows T3 Code's design. Apache-2.0, as Herdr App.
+
+## More
+
+- [herdr-t3-focus](https://github.com/JinJieBeWater/herdr-t3-focus): this layout's Focus sidebar as a standalone mod.
+- [herdling](https://github.com/JinJieBeWater/herdling): a macOS menu bar companion for Herdr.
+- [pi-stuff](https://github.com/JinJieBeWater/pi-stuff): my Pi extensions and skills.
