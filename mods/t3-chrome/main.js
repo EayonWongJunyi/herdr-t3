@@ -1,6 +1,6 @@
 import { View, div, svg } from "gpui-kit";
-import { h_flex, v_flex, Button } from "gpui-base";
-import { theme, run, props, updates, layout, nextCommand, openOverlay } from "herdr";
+import { h_flex, v_flex } from "gpui-base";
+import { theme, run, props, updates, layout, nextCommand } from "herdr";
 
 function find(node, id) {
   if (node?.id === id) return node;
@@ -37,14 +37,8 @@ export default class WorkspaceChrome extends View {
           .child(svg(`mods/t3-chrome/${icon}.svg`).size(16)))
         .child(div().flex_1().min_w(0).truncate().child(label));
       return v_flex().size_full().bg(t.chrome).border_t(1).border_color(t.border).px(8).pt(4).pb(6).text_size(13)
-        .child(h_flex().gap(4).items_center()
-          .child(row("settings", "settings", "Settings", () => run("app.settings")).flex_1().min_w(0)
-            .when(Boolean(updates().app.ready), el => el.child(div().size(6).rounded_full().bg(t.accent))))
-          .child(Button.new("t3-settings").h(30).px(8).flex_none().flex().items_center().justify_center().rounded(8).text_color(t.muted)
-            .hover(s => s.bg(t.hover).text_color(t.foreground))
-            .accessibility_label("T3 settings").tooltip("T3 settings")
-            .on_click(() => openOverlay({ mod: "t3-settings", kind: "dialog", width: 600, height: 460 }))
-            .child("T3")));
+        .child(row("settings", "settings", "Settings", () => run("app.settings"))
+          .when(Boolean(updates().app.ready), el => el.child(div().size(6).rounded_full().bg(t.accent))));
     }
     // Room for the macOS window buttons (layout traffic_lights), a place to drag the window, and the
     // sidebar toggle at its right edge; while the sidebar is hidden, t3-tabs shows it after the buttons.

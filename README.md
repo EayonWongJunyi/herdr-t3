@@ -27,9 +27,9 @@ Ask your Herdr agent to add `herdr.dev/layouts/JinJieBeWater/herdr-t3`. By hand:
 ## Quick start
 
 - **Sidebar**: the button at the top right of the sidebar (or `cmd-shift-b`) switches between Spaces + Agents and Focus; the one next to it hides the sidebar.
-- **T3 settings**: the footer's `T3` button opens the Focus border setting.
 - **Focus**: hover a finished card and click `✓ Settle` to put it away; new work brings it back, or click the undo arrow on its row.
 - **Agent view**: the button left of `+` (or `cmd-shift-a`) shows one agent full size; click a card to change which. A new shell, split or anything from `+` brings the tabs back.
+- **Focus ring** (off by default): in `~/.config/herdr-app/layouts/herdr-t3.json`, set the pane's `focus.color` from `"background"` to `"accent"` (or any theme color) to ring the focused pane. It applies on save.
 
 ## Update
 
@@ -37,7 +37,7 @@ Herdr doesn't update mods or layouts from others, and adding this again would in
 
 - Tell your Herdr agent: "Update Herdr T3 from github.com/JinJieBeWater/herdr-t3: overwrite my installed `mods/t3-*` and `layouts/herdr-t3.*` with the repo's latest, then run `herdr-app check` on each mod." If the first install renamed something because of a clash, overwrite under that name.
 - By hand: copy the same files over the old ones. Mods reload by themselves on save; no restart.
-- Kept: pins, folds, sort, the Settled shelf and settled agents. They live in `data/`, `shared.json` and terminal labels, not in the mod folders. Lost: your own edits to the overwritten files, and the Focus border setting, which lives in the layout; turn it off again in T3 settings.
+- Kept: pins, folds, sort, the Settled shelf and settled agents. They live in `data/`, `shared.json` and terminal labels, not in the mod folders. Lost: your own edits to the overwritten files, including the focus ring color; set it again after overwriting the layout.
 - `keys.json` and the extras stay as they are; compare them with the repo only if the commit log mentions them. Commits marked `!` rename things (for example `refactor!: rename the layout and theme to herdr-t3`); follow what they rename.
 
 ## What it runs
