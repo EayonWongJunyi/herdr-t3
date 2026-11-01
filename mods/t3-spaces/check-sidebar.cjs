@@ -57,7 +57,7 @@ function fixture(width) {
   const panes = agents.map(a => ({ ...a, terminal: a.address, cwd: `/work/${a.space}` }));
   const slots = { sidebar: { id: "sidebar", size: { px: width } }, spaces: { id: "spaces", size: { px: 90 } } };
   const state = { "agents.sort": "grouped" };
-  const calls = [], overlays = [], stores = new Map(), labelled = [], shown = { agent: "child" };
+  const calls = [], overlays = [], stores = new Map(), labelled = [], shown = { agent: "child" }, files = new Map(), watches = [];
   const theme = new Proxy({ selected: "#2c2c2f", hover: "#202024", working: "#6b93ff", blocked: "#f0a33a", done: "#ececf0", muted: "#a9a9b4" }, { get: (t, k) => t[k] ?? "#a9a9b4" });
   const env = {
     View: class {}, div: () => element(), h_flex: () => element("h"), v_flex: () => element("v"),
@@ -68,6 +68,9 @@ function fixture(width) {
     spaces: () => spaces, agents: () => agents, terminals: () => terminals, panes: () => panes,
     machines: () => [{ name: "vps", layout: "ready" }], focused: () => shown,
     exec: async () => ({ code: 1, stdout: "" }),
+    readTextFile: async file => files.get(file) ?? null,
+    watchFolder: dir => new Promise(resolve => watches.push({ dir, resolve })),
+    nextCommand: () => new Promise(() => {}),
     window: () => ({ platform: "macos" }), props: () => ({}), theme: () => theme,
     settings: () => ({ zoom: 1 }), home: () => "/home/test",
     layout: () => ({ children: Object.values(slots) }), shared: key => state[key],
@@ -79,7 +82,7 @@ function fixture(width) {
     },
     openOverlay: spec => overlays.push(spec), closeOverlay() {}, updates: () => ({ app: {} }),
   };
-  function load(name, props = {}) {
+  function load(name, props = {}, lifecycle = cx) {
     const storage = stores.get(name) ?? new Map();
     stores.set(name, storage);
     const localStorage = { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value) };
@@ -91,10 +94,10 @@ function fixture(width) {
     const context = vm.createContext({ ...env, localStorage, props: () => props, fs: fs.promises, appHome: () => path.dirname(modRoot) });
     vm.runInContext(source, context, { filename: name });
     const mod = new context.Mod();
-    mod.init?.(props, cx);
+    mod.init?.(props, lifecycle);
     return mod;
   }
-  return { ...env, load, slots, state, calls, overlays, stores, labelled, shown };
+  return { ...env, load, slots, state, calls, overlays, stores, labelled, shown, files, watches };
 }
 
 for (const width of [180, 200, 240, 268, 480]) {
@@ -526,7 +529,28 @@ for (const width of [180, 200, 240, 268, 480]) {
 (async () => {
   {
     const f = fixture(268);
-    assert.equal(find(f.load("t3-tabs").render(cx), "pulls-review"), null, "no review button");
+    const lifecycle = { ...cx, spawn: task => task(lifecycle) };
+    const tabs = f.load("t3-tabs", {}, lifecycle);
+    const tick = () => new Promise(resolve => setImmediate(resolve));
+    const mods = `${path.dirname(modRoot)}/mods`, metadata = `${mods}/pulls-review/mod.json`;
+    await tick();
+    assert.equal(find(tabs.render(cx), "pulls-review"), null, "no extension, no review button");
+    f.files.set(metadata, '{"place":"none"}');
+    const installed = f.watches.shift();
+    assert.equal(installed.dir, mods);
+    installed.resolve([metadata]);
+    await tick();
+    const root = tabs.render(cx), review = find(root, "pulls-review");
+    assert.ok(review, "installing the extension reveals its entry without a restart");
+    assert.equal(review.style.accessibility_label, "Review repository in pulls.review");
+    fire(review, "on_click", {}, cx);
+    assert.deepEqual(f.calls.pop(), ["mod.open", { name: "pulls-review" }]);
+    fire(find(root, "pulls-review-options"), "on_click", {}, cx);
+    assert.deepEqual(JSON.parse(JSON.stringify(f.overlays.pop())), { mod: "pulls-review", kind: "popup", width: 260, height: 132, props: { configure: true } });
+    f.files.delete(metadata);
+    f.watches.shift().resolve([metadata]);
+    await tick();
+    assert.equal(find(tabs.render(cx), "pulls-review"), null, "uninstalling the extension hides its entry");
   }
   console.log("ok: sidebar widths 180/200/240/268/480, pins, tree, colors, space drag, search/settings, tabs and pane controls, focus sidebar Working/Settle.");
 })().catch(e => { console.error(e); process.exit(1); });
