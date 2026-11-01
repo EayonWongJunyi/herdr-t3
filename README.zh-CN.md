@@ -22,13 +22,13 @@
 
 ## 安装
 
-让你的 Herdr agent 添加 `herdr.dev/layouts/JinJieBeWater/herdr-t3`。手动安装：把 `layouts/herdr-t3.json`、`layouts/herdr-t3.svg` 和所有 `mods/t3-*` 复制进 `~/.config/herdr-app/`，把 `keys.json` 合并进你自己的，然后按 `cmd-shift-l` 切换（或运行 `layout.switch {"name": "herdr-t3"}`）。外观和行为见 [RECIPE.zh-CN.md](RECIPE.zh-CN.md)。
+让你的 Herdr agent 添加 `herdr.dev/layouts/JinJieBeWater/herdr-t3`。手动安装：把 `layouts/herdr-t3.json`、`layouts/herdr-t3.svg` 和所有 `mods/t3-*` 复制进 `~/.config/herdr-app/`，把 `keys.json` 合并进你自己的。外观和行为见 [RECIPE.zh-CN.md](RECIPE.zh-CN.md)。
 
 ## 快速上手
 
-- **侧栏**：`cmd-shift-b` 在 Spaces + Agents 和 Focus 之间切换。
+- **侧栏**：侧栏右上角的按钮（或 `cmd-shift-b`）在 Spaces + Agents 和 Focus 之间切换；旁边那个按钮隐藏侧栏。
 - **Focus**：鼠标移到已结束的卡片上，点 `✓ Settle` 收起；有新工作时它会自己回来，也可以点那一行的撤销箭头拿回来。
-- **Agent 模式**：`cmd-shift-a` 把一个 agent 铺满显示，点侧栏卡片切换显示哪个。新开 shell、分屏或从 `+` 启动东西时会自动回到标签模式。
+- **Agent 模式**：`+` 左边的按钮（或 `cmd-shift-a`）把一个 agent 铺满显示，点侧栏卡片切换显示哪个。新开 shell、分屏或从 `+` 启动东西时会自动回到标签模式。
 
 ## 更新
 

@@ -22,13 +22,13 @@ Only want the Settle sidebar? It is also published alone: [herdr-t3-focus](https
 
 ## Install
 
-Ask your Herdr agent to add `herdr.dev/layouts/JinJieBeWater/herdr-t3`. By hand: copy `layouts/herdr-t3.json`, `layouts/herdr-t3.svg` and every `mods/t3-*` into `~/.config/herdr-app/`, merge `keys.json` into yours, then switch with `cmd-shift-l` (or `layout.switch {"name": "herdr-t3"}`). How it should look and behave: [RECIPE.md](RECIPE.md).
+Ask your Herdr agent to add `herdr.dev/layouts/JinJieBeWater/herdr-t3`. By hand: copy `layouts/herdr-t3.json`, `layouts/herdr-t3.svg` and every `mods/t3-*` into `~/.config/herdr-app/`, merge `keys.json` into yours. How it should look and behave: [RECIPE.md](RECIPE.md).
 
 ## Quick start
 
-- **Sidebar**: `cmd-shift-b` switches between Spaces + Agents and Focus.
+- **Sidebar**: the button at the top right of the sidebar (or `cmd-shift-b`) switches between Spaces + Agents and Focus; the one next to it hides the sidebar.
 - **Focus**: hover a finished card and click `✓ Settle` to put it away; new work brings it back, or click the undo arrow on its row.
-- **Agent view**: `cmd-shift-a` shows one agent full size; click a card to change which. A new shell, split or anything from `+` brings the tabs back.
+- **Agent view**: the button left of `+` (or `cmd-shift-a`) shows one agent full size; click a card to change which. A new shell, split or anything from `+` brings the tabs back.
 
 ## Update
 
