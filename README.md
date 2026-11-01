@@ -24,6 +24,16 @@ Only want the Settle sidebar? It is also published alone: [herdr-t3-focus](https
 
 Ask your Herdr agent to add `herdr.dev/layouts/JinJieBeWater/herdr-t3`. By hand: copy `layouts/herdr-t3.json`, `layouts/herdr-t3.svg` and every `mods/t3-*` into `~/.config/herdr-app/`, merge `keys.json` into yours, then switch with `ctrl-shift-l` (or `layout.switch {"name": "herdr-t3"}`). How it should look and behave: [RECIPE.md](RECIPE.md).
 
+## Quick start
+
+1. **Switch to it**: `ctrl-shift-l` until the window shows Herdr T3. Optionally pick the `herdr-t3` theme in Settings (see Extras).
+2. **Start work**: `+` at the right of the tab bar (or `cmd-t`). Pick a space, or New space for a folder, then a terminal or an agent.
+3. **Watch it in Spaces + Agents**: the sidebar starts there. Spaces show where you are and their git state; Agents list what's running, with a spinner, `!` or a dot.
+4. **Move to Focus when agents pile up**: `cmd-shift-b` (or the check icon at the top of the sidebar). Agents that need you are cards at the top; busy ones fold into Working.
+5. **Settle what's done**: hover a finished card and click `✓ Settle`. It drops into Settled at the bottom and its done dot goes away. Prompt it again, or let it work, and it comes back by itself; the undo arrow on its row brings it back by hand.
+6. **Look at one agent at a time**: `cmd-shift-a` (or the button left of `+`). The work area shows one agent full size; click a card or row, or use `cmd-]` / `cmd-[`, to change which. A split (`cmd-d`), a new tab or anything from `+` brings the tabs back, so nothing opens out of sight. `cmd-shift-a` again returns to the tabs.
+7. **Panes**: hover a pane's header to split, zoom or close it; `cmd-d` / `cmd-shift-d` split, `cmd-shift-enter` zooms.
+
 ## Update
 
 Herdr doesn't update mods or layouts from others, and adding this again would install a renamed second copy (`t3-focus-2`), since an install never overwrites. Update by overwriting instead:

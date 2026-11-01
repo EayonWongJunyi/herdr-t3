@@ -24,6 +24,16 @@
 
 让你的 Herdr agent 添加 `herdr.dev/layouts/JinJieBeWater/herdr-t3`。手动安装：把 `layouts/herdr-t3.json`、`layouts/herdr-t3.svg` 和所有 `mods/t3-*` 复制进 `~/.config/herdr-app/`，把 `keys.json` 合并进你自己的，然后按 `ctrl-shift-l` 切换（或运行 `layout.switch {"name": "herdr-t3"}`）。外观和行为见 [RECIPE.zh-CN.md](RECIPE.zh-CN.md)。
 
+## 快速上手
+
+1. **切换过来**：按 `ctrl-shift-l`，直到窗口变成 Herdr T3。想要截图里的配色，再到设置里选 `herdr-t3` 主题（见可选扩展）。
+2. **开始干活**：点标签栏右侧的 `+`（或按 `cmd-t`）。先选一个 space，或用 New space 选一个文件夹，再选终端或某个 agent。
+3. **在 Spaces + Agents 里看进度**：侧栏一开始就是这个视图。Spaces 显示你在哪、git 状态如何；Agents 列出正在跑的 agent，用转圈、`!` 或圆点表示状态。
+4. **agent 多了就切到 Focus**：按 `cmd-shift-b`（或侧栏顶部的对勾图标）。需要你处理的 agent 以卡片排在上方，工作中的折叠进 Working。
+5. **把做完的 Settle 掉**：鼠标移到已结束的卡片上，点 `✓ Settle`。它会收进底部的 Settled，done 圆点也会消失。之后再给它发消息，或它又开始工作，就会自己回来；也可以点它那一行的撤销箭头手动拿回来。
+6. **一次只看一个 agent**：按 `cmd-shift-a`（或 `+` 左边的按钮）。工作区会把一个 agent 铺满显示；点侧栏的卡片或行，或按 `cmd-]` / `cmd-[`，切换显示哪个。分屏（`cmd-d`）、新建标签或从 `+` 启动任何东西都会自动回到标签模式，不会开在看不见的地方。再按一次 `cmd-shift-a` 回到标签模式。
+7. **窗格**：鼠标移到窗格标题栏上可以分屏、缩放或关闭；`cmd-d` / `cmd-shift-d` 分屏，`cmd-shift-enter` 缩放。
+
 ## 更新
 
 Herdr 不会更新别人做的 mod 和布局。再添加一次也不行：安装从不覆盖已有文件，只会装出一份改了名的副本（如 `t3-focus-2`）。更新要靠覆盖：
