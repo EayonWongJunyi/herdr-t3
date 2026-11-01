@@ -439,6 +439,7 @@ for (const width of [180, 200, 240, 268, 480]) {
   release();
   lift("slim-vps/t2"); over("active");
   fire(root(), "on_hover", false, run);
+  assert.equal(find(root(), "drag-ghost"), null, "leaving off a side puts it back");
   release();
   const before = f.calls.length;
   lift("slim-vps/t2"); over("active");
@@ -448,6 +449,15 @@ for (const width of [180, 200, 240, 268, 480]) {
   release();
   assert.deepEqual(f.calls.slice(before), [["pane.focus", { pane: "p9" }]], "and the release still hands the keyboard back");
   assert.equal(f.labelled.length, n, "none of those changed anything");
+  // Off the bottom edge, past the Settled shelf, it lands where the badge said (Herdr reports no release outside).
+  fire(root(), "on_size_change", { width: 268, height: 900 }, run);
+  for (const k of f.terminals()) if (k.address === "vps/t2") k.labels = {};
+  lift("card-vps/t2");
+  fire(root(), "on_mouse_move", { position: { x: 0, y: 40 }, local_position: { x: 130, y: 895 } }, run);
+  over("settled-header");
+  fire(root(), "on_hover", false, run);
+  assert.equal(find(root(), "drag-ghost"), null);
+  assert.deepEqual(f.labelled.pop()?.slice(0, 2), ["label", "vps/t2"], "leaving off the bottom settles it");
   const calls = f.calls.length;
   lift("slim-vps/t2"); over("slim-vps/t2");
   fire(find(root(), "slim-vps/t2"), "on_click", {}, run);
