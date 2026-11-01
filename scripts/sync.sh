@@ -15,5 +15,14 @@ for m in t3-agents t3-tabs t3-chrome t3-released; do cp "$src/mods/t3-focus/rele
 rsync -a --delete $gen --exclude mod.json "$src/mods/t3-focus/" "$focus/mods/t3-focus/"
 # One mod at a time: other t3-* folders in the app (yours, a test's) are left alone.
 for d in "$src"/mods/t3-*/; do rsync -a --delete $gen "$d" "$app/mods/$(basename "$d")/"; done
+# The theme picker, stack switches and T3's Focus border write into the installed layout; keep them across syncs.
+layout="$app/layouts/herdr-t3.json"
+old=$(cat "$layout" 2>/dev/null || echo '{}')
 cp "$src"/layouts/herdr-t3.* "$app/layouts/"
+jq --argjson old "$old" '[$old | .. | objects | .focus? | objects | .color][0] as $c
+  | ([$old | .. | objects | select((.id | strings) and .active) | {(.id): .active}] | add // {}) as $active
+  | (if $old.theme then .theme = $old.theme else . end)
+  | (.. | objects | select((.id | strings) and $active[.id])) |= (.active = $active[.id])
+  | (.. | objects | .focus? | objects | .color) |= ($c // .)' "$layout" > "$layout.tmp"
+mv "$layout.tmp" "$layout"
 cp "$src/extras/themes/herdr-t3.json" "$app/themes/"
