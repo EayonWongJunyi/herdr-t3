@@ -35,6 +35,7 @@ Herdr App 的一个安静、近似 T3 Code 的窗口：左侧 268px 侧栏，可
 - **Focus / Settle**：悬停已结束的卡片出现 `✓ Settle`；悬停已 Settle 的行出现撤销箭头；有新工作（working、blocked，或 Settle 后又结束过一轮）自动回来。不做自动 Settle。
 - **已释放的 Pi**：默认关闭，只有通过 **T3 → Behavior → Auto release** 将共享设置 `t3.auto-release` 明确设为 `true` 才启用新回收。顶层 Pi 的 Settle 满 30 分钟，且整棵树都 idle/done、可接回、未置顶、未显示时，品牌栏可以释放整棵树。先保存每个会话路径，在每个终端窗格旁放 `t3-released`，重读树和轮次，再先结束父、后清理仍存活的子进程。准备期间关掉开关，最终复查会取消释放。卡片、列表、标签保留名字，增加淡色 `Released`。打开保存的标签只自动接回父 agent；子窗格提供手动 Resume。关闭自动回收后，已保存的对话仍能接回。普通空闲不触发释放。
 - **标签**：单击选中，双击改名，拖动排序，右键菜单，滚轮切换上/下一个标签（Agent 模式下切换 agent）。
+- **支持范围**：Settle 可用于所有 agent；自动回收目前只支持 Pi，默认关闭。Claude Code、Codex 和其他程序不会被自动回收；Pi 树中包含这些程序时，整树也不回收。设置项明确标为 `Auto release (Pi only)`。
 - **Agent 模式**：切换按钮或 `cmd-shift-a`（`t3-tabs.view`）对 stack `view` 执行 `layout.select`（`main` / `agent`）。它让键盘停在这个 agent 上，所以会落到看不见的地方的操作都会退回标签模式：当前 space 新出现的 shell 或 mod 窗格（分屏、新标签；随后对它执行 `pane.focus`）、从 `+` 启动的任何东西（`t3-new-menu` 先退出 Agent 模式）、用键盘把焦点移到 shell。新出现的 agent 窗格不抢画面；用键盘把焦点移到 agent 窗格时改为显示那个 agent。
 - 置顶、折叠、排序、筛选和收纳区状态按屏幕保存（`localStorage` / 共享状态 `agents.sort`、`space.colors`）。
 

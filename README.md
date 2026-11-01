@@ -33,6 +33,8 @@ Ask your Herdr agent to add `herdr.dev/layouts/JinJieBeWater/herdr-t3`. By hand:
 - **Released**: a dim `Released` label means the process has stopped. Click its card or tab to reconnect. Unsettle changes its place in the list; it reconnects when you open it. Working, blocked, pinned and visible conversations are kept running. Release runs only in this layout and only after you explicitly Settle; ordinary idle time does not count.
 - **Agent view**: the button left of `+` (or `cmd-shift-a`) shows one agent full size; click a card to change which. A new shell, split or anything from `+` brings the tabs back.
 
+Settle works with all agents. **Automatic release currently supports Pi only.** Claude Code, Codex and other programs stay running; a Pi tree containing any of them is also kept running. Putting an agent in Settle does not enable automatic release: the setting must be turned on separately.
+
 ## Update
 
 Herdr doesn't update mods or layouts from others, and adding this again would install a renamed second copy (`t3-focus-2`), since an install never overwrites. Update by overwriting instead:

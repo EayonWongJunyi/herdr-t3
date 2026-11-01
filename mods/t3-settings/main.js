@@ -37,15 +37,15 @@ export default class Settings extends View {
     const auto = shared("t3.auto-release") === true;
     const release = Switch.new("auto-release").checked(auto)
       .accessibility_label("Auto release")
-      .w_full().h(76).px(16).flex().items_center().gap(24).rounded(8)
+      .w_full().h(92).px(16).flex().items_center().gap(24).rounded(8)
       .bg(t.background).border(1).border_color(t.border).text_color(t.foreground)
       .on_change((enabled, cx) => {
         setShared("t3.auto-release", enabled === true);
         cx.notify();
       })
       .child(v_flex().flex_1().min_w(0).gap(6)
-        .child(div().font_medium().child("Auto release"))
-        .child(div().text_size(12).text_color(t.muted).child("Release idle Pi trees after 30 minutes in Settle. Off by default.")))
+        .child(div().font_medium().child("Auto release (Pi only)"))
+        .child(div().text_size(12).text_color(t.muted).child("Release idle Pi agents after 30 minutes in Settle. Claude, Codex and other agents stay running.")))
       .child(div().w(34).h(20).p(2).flex_none().rounded_full().bg(auto ? t.accent : t.hover)
         .flex().when(auto, el => el.justify_end())
         .child(div().size(16).rounded_full().bg(auto ? t.accent_foreground : t.muted)));
