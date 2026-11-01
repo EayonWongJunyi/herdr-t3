@@ -6,7 +6,8 @@
 
 import { View, div, svg, image } from "gpui-kit";
 import { h_flex } from "gpui-base";
-import { panes, props, run, theme, home } from "herdr";
+import { panes, terminals, props, run, theme, home, layout } from "herdr";
+import { namer } from "./name.js";
 
 function icon(p, size, color) {
   if (!p?.icon) return null;
@@ -17,6 +18,12 @@ function folder(cwd) {
   if (!cwd) return "";
   const h = home();
   return cwd === h ? "~" : cwd.startsWith(h + "/") ? "~" + cwd.slice(h.length) : cwd;
+}
+
+// Settled in the Focus list isn't news, so its done dot goes, as in the tabs.
+function settled(p) {
+  const find = (n) => n?.id === "sidebar-lists" ? n : (n?.children ?? []).map(find).find(Boolean);
+  return find(layout())?.active === "focus" && Boolean(terminals().find((k) => k.address === p.terminal)?.labels?.settled);
 }
 
 export default class Pane extends View {
@@ -46,7 +53,7 @@ export default class Pane extends View {
     const t = theme();
     const p = this.me();
     if (!p) return div();
-    const name = ((p.program?.agent || p.program?.shell) && p.program.name) || p.title || p.program?.name || "shell";
+    const name = namer()(p);
     const pic = icon(p.program, 14, t.muted);
     const st = p.status;
     const pane = p.pane;
@@ -66,7 +73,7 @@ export default class Pane extends View {
       .when(st === "working", el => el.child(svg("mods/workspace-chrome/spinner.svg").size(12).flex_none().text_color(t.working).spin(900)))
       // The same marks as the agents list and tabs.
       .when(st === "blocked", el => el.child(div().size(14).flex_none().rounded(4).bg(t.blocked + "26").text_size(11).font_bold().text_color(t.blocked).flex().items_center().justify_center().accessibility_label("Needs you").child("!")))
-      .when(st === "done", el => el.child(div().size(7).flex_none().rounded_full().bg(t.done)))
+      .when(st === "done" && !settled(p), el => el.child(div().size(7).flex_none().rounded_full().bg(t.done)))
       .when(this.hovered, el => el.child(h_flex().flex_none().gap(4).items_center()
         .child(this.button(t, `ph-r-${pane}`, "mods/t3-pane/split-right.svg", "Split right", () => run("pane.split", { direction: "right", pane })))
         .child(this.button(t, `ph-d-${pane}`, "mods/t3-pane/split-down.svg", "Split down", () => run("pane.split", { direction: "down", pane })))

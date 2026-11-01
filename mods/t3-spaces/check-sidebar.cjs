@@ -48,7 +48,7 @@ const modRoot = path.dirname(__dirname);
 const cx = { notify() {}, stop_propagation() {}, spawn() {}, timer: { every() {} } };
 function fixture(width) {
   const program = { key: "pi", name: "Pi", agent: true, tint: true, icon: "icons/pi.svg" };
-  const tabs = ["local task", "second task", "remote task"].map((name, i) => ({ id: `b${i}`, name }));
+  const tabs = ["local task", "second task", "remote task"].map((name, i) => ({ id: `b${i}`, name, named: true }));
   const spaces = tabs.map((tab, i) => ({ id: `s${i}`, name: `project ${i}`, active: i === 0, folder: `/work/p${i}`, machine: i === 2 ? "vps" : null, status: "working", tabs: [tab] }));
   const agents = [0, 2].map((i) => ({ address: i === 2 ? "vps/t2" : "t0", pane: `p${i}`, space: `s${i}`, space_name: spaces[i].name, tab: `b${i}`, title: tabs[i].name, seq: i, program, focused: i === 0, status: i === 0 ? "working" : "blocked" }));
   const terminals = [...agents.map(a => ({ ...a, state: "live" })),
@@ -84,7 +84,8 @@ function fixture(width) {
     stores.set(name, storage);
     const localStorage = { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value) };
     const read = file => fs.readFileSync(path.join(modRoot, name, file), "utf8");
-    const source = read("main.js")
+    // name.js, the shared naming rule, is inlined as the mod's own copy is.
+    const source = ((fs.existsSync(path.join(modRoot, name, "name.js")) ? read("name.js") + "\n" : "") + read("main.js"))
       .replace(/^import .*;\r?\n/gm, "").replace(/export function /g, "function ")
       .replace("export default class", "globalThis.Mod = class");
     const context = vm.createContext({ ...env, localStorage, props: () => props, fs: fs.promises, appHome: () => path.dirname(modRoot) });
@@ -178,7 +179,7 @@ for (const width of [180, 200, 240, 268, 480]) {
   f.agents()[0].status = "working";
   const t0 = f.terminals().find(k => k.address === "t0");
   t0.labels = { "pi.session": "mine" };
-  assert.ok(strings(find(ag.render(cx), "ag-t0")).includes("local task"), "a lone agent keeps its tab's name");
+  assert.ok(strings(find(ag.render(cx), "ag-t0")).includes("mine"), "a lone agent reads as its session, as in Focus");
   f.agents().push({ ...f.agents()[0], address: "t1", pane: "p1", seq: 1, focused: false });
   f.terminals().push({ address: "t1", state: "live", labels: { "pi.session": "theirs" } });
   const shared = ag.render(cx);
@@ -381,6 +382,11 @@ for (const width of [180, 200, 240, 268, 480]) {
   assert.equal(find(root, "tab-b0").hoverStyle.bg, undefined);
   assert.equal(find(root, "tab-other").hoverStyle.bg, f.theme().hover);
   assert.equal(find(root, "tab-scroll").style.gap, 4);
+  // A tab nobody named reads as its agent, the name its pane header and Focus card show.
+  Object.assign(first, { name: "1", named: false });
+  f.terminals().find(k => k.address === "t0").labels = { "pi.session": "mine" };
+  assert.ok(strings(find(f.load("t3-tabs").render(cx), "tab-b0")).includes("mine"), "an unnamed tab reads as its agent's session");
+  assert.ok(strings(f.load("t3-pane", { pane: "p0" }).render(cx)).includes("mine"), "its pane header reads the same");
   assert.equal(find(root, "sidebar-toggle"), null, "with the sidebar shown its own header has the toggle");
   f.slots.sidebar.hidden = true;
   const bare = tabs.render(cx);

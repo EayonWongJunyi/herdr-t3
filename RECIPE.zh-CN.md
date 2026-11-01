@@ -17,13 +17,14 @@ Herdr App 的一个安静、近似 T3 Code 的窗口：左侧 268px 侧栏，可
     - **Focus**：T3 侧栏。需要你的 agent 显示为卡片，底部是折叠的 Working 和 Settled 收纳区（见 `mods/t3-focus`；[单独 mod 的 recipe](https://github.com/JinJieBeWater/herdr-t3-focus/blob/main/RECIPE.zh-CN.md) 有完整说明）。
   - **底栏**（41px，上边框）：一行 Settings；App 更新就绪时带一个 6px `accent` 圆点。
 - **工作区**：
-  - **标签栏**（40px，可拖动窗口）：当前 space 的标签，28px 胶囊（圆角 6，当前标签 `selected`）：程序图标、名字（自动名 `tb3` 显示为程序名），工作中显示转圈，blocked 显示 `!` 徽章，done 且未看显示 7px `done` 圆点；当前标签有关闭 `×`。然后是 `+`（打开 `t3-new-menu`）。Windows 上有窗口按钮。侧栏隐藏时，最左边出现侧栏开关，同时统计 agent：blocked、working、done。
+  - **标签栏**（40px，可拖动窗口）：当前 space 的标签，28px 胶囊（圆角 6，当前标签 `selected`）：程序图标、名字（没人命名的标签按下面的命名规则显示其中的 agent，没有 agent 就显示当前 pane），工作中显示转圈，blocked 显示 `!` 徽章，done 且未看显示 7px `done` 圆点；当前标签有关闭 `×`。然后是 `+`（打开 `t3-new-menu`）。Windows 上有窗口按钮。侧栏隐藏时，最左边出现侧栏开关，同时统计 agent：blocked、working、done。
   - **窗格**（内边距 2/8，间距 8）：圆角 8，无边框和焦点环，`background` 填充，单个窗格也带框。每个窗格顶部有 28px 标题栏：程序图标、agent 名或终端标题（13px 中粗，聚焦时 `foreground`）、目录、状态标记，以及右分屏、下分屏、缩放/取消缩放、关闭按钮。
   - 底部留 6px；布局里有自带的 `workspace-status` 状态栏，但隐藏。
 - **新建菜单**（`t3-new-menu`，520×420 弹层，位于顶部）：先选 space（或 New space），再选在那里启动什么：终端或任一已安装的 agent；`⌘1…` 按编号选 space。
 
 ## 它怎么表现
 
+- **名字**，各处（focus 卡片、agents 列表、标签、窗格标题）一条规则，写在 `mods/t3-focus/name.js`，用到它的 mod 各放一份副本：先用 Pi 会话名（`pi.session` 标签）；agent 再看有人命名过的标签名；然后是有意义的终端标题（不是路径、不含 `user@host`、不是程序自己的名字）；最后是程序名。
 - **agent 状态**，各处（agents 列表、标签、窗格标题、focus 卡片）标记一致：working：`working` 色转圈；blocked：14px 圆角 `!` 徽章，底色为 15% 不透明的 `blocked`；done：7px `done` 圆点（Focus 里是绿色 `Done`）；idle：agents 列表里是圆环，其余位置不显示。父级显示子 agent 中最紧急的状态；子 agent 的 `error` 视为 blocked。
 - **侧栏模式**：品牌栏按钮或 `cmd-shift-b`（`t3-chrome.sidebar`）对 stack `sidebar-lists` 执行 `layout.select`（`lists` / `focus`）。显示 Focus 时，标签栏和侧栏开关的计数里不再显示已 Settle agent 的完成圆点。
 - **Spaces**：单击切换，右键打开自带 `menu`，拖动排序；悬停 checkout 的头像时它变成 worktree 的折叠箭头。只在 git 可能变化时读取（新位置、命令或轮次结束、机器重新连上），窗口在前台时另有慢速兜底轮询。

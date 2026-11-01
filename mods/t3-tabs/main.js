@@ -1,6 +1,7 @@
 import { View, div, svg, image } from "gpui-kit";
 import { h_flex } from "gpui-base";
 import { spaces, panes, agents, terminals, run, openOverlay, theme, window, layout, settings } from "herdr";
+import { namer } from "./name.js";
 
 // With the focus list showing (t3-focus), an agent settled there isn't news: its done is left out.
 // One that works or gets stuck is unsettled there, so only done needs leaving out.
@@ -50,12 +51,16 @@ export default class Tabs extends View {
     const space = spaces().find(p => p.active);
     const shown = space?.tabs ?? [];
     const live = awake();
+    const ps = panes(), title = namer();
     const stop = (_e, cx) => cx.stop_propagation();
     const button = (id, label, action) => div().id(id).size(26).flex_none().flex().items_center().justify_center().rounded(6).text_color(t.dim).hover(s => s.bg(t.hover).text_color(t.foreground))
       .on_mouse_down("left", stop).on_click(action).child(label);
     const item = (c, i) => {
-      const program = panes().find(p => p.tab === c.id && p.program?.agent)?.program ?? panes().find(p => p.tab === c.id)?.program;
-      const name = /^tb\d+$/.test(c.name) ? program?.name ?? "Terminal" : c.name;
+      // A tab nobody named reads as its lead pane: the agent in it, else the focused one.
+      const mine = ps.filter(p => p.tab === c.id);
+      const lead = mine.find(p => p.status != null) ?? mine.find(p => p.focused) ?? mine[0];
+      const program = lead?.program;
+      const name = c.named ? c.name : lead ? title(lead) : "Terminal";
       return h_flex().id(`tab-${c.id}`).h(28).px(8).gap(8).rounded(6).items_center().flex_none().text_size(13)
         .bg(c.active ? t.selected : t.chrome).text_color(c.active ? t.foreground : t.muted)
         .when(!c.active, el => el.hover(s => s.bg(t.hover)))

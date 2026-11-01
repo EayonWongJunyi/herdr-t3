@@ -27,25 +27,37 @@ function find(node, id) {
   return null;
 }
 
+function texts(node, out = []) {
+  if (typeof node === "string") out.push(node);
+  else if (node && typeof node === "object") for (const child of node.items) texts(child, out);
+  return out;
+}
+
 const calls = [];
-const program = { name: "Pi", agent: true };
-const pane = { pane: "p2", tab: "b", cwd: "/home/me/project", program, status: "working" };
+const program = { name: "Pi", key: "pi", agent: true };
+const pane = { pane: "p2", terminal: "t2", tab: "b", title: "pi", cwd: "/home/me/project", program, status: "working" };
+const shell = { pane: "p3", terminal: "t3", tab: "b", title: "me@mac: ~/project", cwd: "/home/me/project", program: { name: "zsh", key: "shell", shell: true }, status: null };
+let terms = [{ address: "t2", labels: {} }, { address: "t3", labels: {} }];
+let tab = { id: "b", name: "Release", named: true };
+let sidebar = { id: "root", children: [{ id: "sidebar-lists", active: "lists" }] };
 let props = { pane: "p2" };
 const env = {
   View: class {}, div: element, svg: element, image: element, h_flex: element,
-  theme: () => ({}), props: () => props, panes: () => [pane], home: () => "/home/me",
+  theme: () => ({}), props: () => props, panes: () => [pane, shell], home: () => "/home/me",
+  terminals: () => terms, spaces: () => [{ tabs: [tab] }], layout: () => sidebar,
   run: (name, args) => calls.push([name, args]),
 };
 const cx = { notify() {}, stop_propagation() {} };
-function load(file) {
-  const src = fs.readFileSync(file, "utf8")
+// name.js is inlined as the mod's own copy is.
+function load(...files) {
+  const src = files.map((f) => fs.readFileSync(f, "utf8")).join("\n")
     .replace(/^import .*;\r?\n/gm, "").replace(/export function /g, "function ").replace("export default class", "globalThis.Mod = class");
   const context = vm.createContext({ ...env });
-  vm.runInContext(src, context, { filename: file });
+  vm.runInContext(src, context, { filename: files.at(-1) });
   const mod = new context.Mod(); mod.init(); return mod;
 }
 const take = () => JSON.parse(JSON.stringify(calls.splice(0)));
-const header = load(path.join(__dirname, "main.js"));
+const header = load(path.join(__dirname, "name.js"), path.join(__dirname, "main.js"));
 header.hovered = true;
 find(header.render(), "pane-head-p2").handlers.click({}, cx);
 assert.deepEqual(take(), [["pane.focus", { pane: "p2" }]]);
@@ -57,6 +69,29 @@ find(header.render(), "ph-z-p2").handlers.click({}, cx);
 assert.deepEqual(take(), [["pane.zoom", { pane: "p2" }]]);
 find(header.render(), "ph-x-p2").handlers.click({}, cx);
 assert.deepEqual(take(), [["pane.close", { pane: "p2" }]]);
+
+// Names: Pi session, else (agents only) a named tab, else a telling title, else the program.
+const named = () => texts(header.render())[0];
+terms[0].labels["pi.session"] = "Fix login";
+assert.equal(named(), "Fix login");
+delete terms[0].labels["pi.session"];
+assert.equal(named(), "Release");
+tab.named = false; pane.title = "π - Review PR";
+assert.equal(named(), "π - Review PR");
+pane.title = "pi";
+assert.equal(named(), "Pi");
+tab.named = true; props = { pane: "p3" };
+assert.equal(named(), "zsh");
+
+// A settled agent's done dot goes only while the Focus list shows.
+props = { pane: "p2" }; pane.status = "done"; header.hovered = false;
+const dots = () => header.render().items.length;
+const shown = dots();
+terms[0].labels.settled = "1:1";
+assert.equal(dots(), shown);
+sidebar.children[0].active = "focus";
+assert.equal(dots(), shown - 1);
+
 props = { pane: "missing" };
 assert.equal(find(header.render(), "pane-head-p2"), null);
-console.log("ok: a lone pane keeps zoom and close; focus, both splits and close target their own pane; a missing pane renders nothing.");
+console.log("ok: a lone pane keeps zoom and close; focus, both splits and close target their own pane; names follow the shared rule; a settled done dot hides under Focus; a missing pane renders nothing.");

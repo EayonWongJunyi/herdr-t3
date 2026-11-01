@@ -3,21 +3,8 @@
 
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex, Button } from "gpui-base";
-import { agents, terminals, panes, focused, spaces, run, theme, shared, setShared, setAgentOrder, openOverlay, closeOverlay, props } from "herdr";
-
-const clean = (s) => (s ?? "").replace(/^[^\p{L}\p{N}]+/u, "").trim();
-
-function lead(tab, all = panes()) {
-  const mine = all.filter(p => p.tab === tab.id && p.terminal);
-  return mine.find(p => p.program?.agent) ?? mine.find(p => p.focused) ?? mine[0];
-}
-
-function title(tab, l) {
-  const prog = l?.program?.name;
-  const live = clean(l?.title);
-  const telling = live && live !== prog && !/^[~/]|^[A-Za-z]:\\/.test(live) && !live.includes("@") && live.toLowerCase() !== l?.program?.key;
-  return tab.name === prog && telling ? live : tab.name;
-}
+import { agents, terminals, focused, run, theme, shared, setShared, setAgentOrder, openOverlay, closeOverlay, props } from "herdr";
+import { namer } from "./name.js";
 const RANK = { blocked: 4, done: 3, working: 2, idle: 1 };
 // A sub-agent without a pane isn't in agents(): its raw word, error counting as
 // blocked. It's never done: it reports to its parent, and the parent's done is the news.
@@ -247,18 +234,8 @@ export default class Agents extends View {
         .child(String(subs.length));
     };
 
-    // A row's detail is a tab someone named or the agent's own title, never an
-    // automatic tab number unless two rows would otherwise read the same.
-    const tabs = spaces().flatMap(s => s.tabs);
-    // Agents sharing a tab would all read as the tab; each Pi labels its own terminal with its session name.
-    const perTab = {};
-    for (const a of list) perTab[a.tab] = (perTab[a.tab] ?? 0) + 1;
-    const own = (a) => perTab[a.tab] > 1 ? all.find((k) => k.address === a.address)?.labels?.["pi.session"] : null;
-    const label = (a) => {
-      if (own(a)) return own(a);
-      const tab = tabs.find(tab => tab.id === a.tab);
-      return tab ? title(tab, lead(tab)) : a.title || a.program?.name || "";
-    };
+    // A row's detail is what the agent is on, as Focus, tabs and pane headers name it.
+    const label = namer();
     const detail = new Map(list.map(a => [a.address, /^\d+$/.test(label(a)) ? null : label(a)]));
     const seen = {};
     for (const a of list) { const k = `${a.space_name}\u0000${detail.get(a.address) ?? ""}`; seen[k] = (seen[k] ?? 0) + 1; }
