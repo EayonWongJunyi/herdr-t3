@@ -195,7 +195,7 @@ for (const width of [180, 200, 240, 268, 480]) {
   assert.deepEqual(f.calls.pop(), ["terminal.peek", { terminal: "child" }]);
   fire(agent, "on_click", {}, cx);
   assert.deepEqual(f.calls.pop(), ["agent.focus", { terminal: "t0" }]);
-  assert.equal(f.stores.get("t3-agents").get("pins"), undefined, "ordinary row click does not pin");
+  assert.equal(f.state["agents.pins"], undefined, "ordinary row click does not pin");
   fire(space, "on_mouse_down:left", {}, cx);
   fire(space, "on_mouse_up:left", {}, cx);
   assert.deepEqual(f.calls.pop(), ["space.select", { id: "s0" }]);
@@ -212,7 +212,7 @@ for (const width of [180, 200, 240, 268, 480]) {
   fire(find(ag.render(cx), "ag-t0"), "on_hover", true, cx);
   fire(find(ag.render(cx), "pin-t0"), "on_click", {}, { ...cx, stop_propagation() { stopped = true; } });
   assert.ok(stopped, "pin button stops propagation to the row");
-  assert.ok(JSON.parse(f.stores.get("t3-agents").get("pins")).includes("t0"));
+  assert.ok(f.state["agents.pins"].includes("t0"));
   assert.equal(find(ag.render(cx), "pin-t0"), null, "pinning does not leave a stale hover after reordering");
   fire(find(ag.render(cx), "ag-t0"), "on_hover", true, cx);
   assert.equal(find(ag.render(cx), "pin-t0").items[0].source, "mods/workspace-chrome/pin-off.svg", "pinned rows offer unpin");
@@ -220,13 +220,13 @@ for (const width of [180, 200, 240, 268, 480]) {
   assert.equal(find(ag.render(cx), "pin-t0"), null, "pinned rows also hide their pin outside hover");
   fire(find(ag.render(cx), "ag-t0"), "on_hover", true, cx);
   fire(find(ag.render(cx), "pin-t0"), "on_click", {}, cx);
-  assert.equal(JSON.parse(f.stores.get("t3-agents").get("pins")).includes("t0"), false, "unpin still persists");
+  assert.equal(f.state["agents.pins"].includes("t0"), false, "unpin still persists");
   assert.equal(f.calls.length, beforePin, "pin and unpin do not focus a pane");
   fire(find(ag.render(cx), "ag-vps/t2"), "on_hover", true, cx);
   fire(find(ag.render(cx), "ag-t0"), "on_hover", false, cx);
   assert.equal(find(ag.render(cx), "pin-t0"), null);
   fire(find(ag.render(cx), "pin-vps/t2"), "on_click", {}, cx);
-  assert.deepEqual(JSON.parse(f.stores.get("t3-agents").get("pins")), ["vps/t2"], "pin acts on the selected remote button");
+  assert.deepEqual([...f.state["agents.pins"]], ["vps/t2"], "pin acts on the selected remote button");
   const header = f.load("t3-chrome").render(cx);
   assert.deepEqual(header.items.map(n => n.key), ["sidebar-mode", "sidebar-toggle"], "the header holds the sidebar switch and toggle; search is a shortcut");
   assert.equal(header.style.pr + (26 - 14) / 2, 16, "the toggle's icon ends on the same line as the + and status column");
@@ -323,6 +323,41 @@ for (const width of [180, 200, 240, 268, 480]) {
   f.agents()[0].status = "idle"; f.terminals().find(c => c.address === "child").status = "idle";
   f.terminals().find(c => c.address === "grandchild").status_ms = Date.now() - 90000;
   assert.deepEqual(strings(find(fo.render(cx), "state-t0")), ["Working 1m"], "the waiting parent shows its sub-agent's working time");
+}
+
+{
+  // Pins are one set with the agents list: dragging onto Pinned pins, within it reorders, onto Active unpins.
+  const f = fixture(268), fo = f.load("t3-focus");
+  for (const a of f.agents()) a.status = "done";
+  for (const k of f.terminals()) if (k.parent) k.status = "idle";
+  const at = (y) => ({ position: { x: 0, y } });
+  const drag = (from, to) => {
+    fire(find(fo.render(cx), from), "on_mouse_down:left", at(0), cx);
+    fire(find(fo.render(cx), from), "on_mouse_move", at(10), cx);
+    fire(find(fo.render(cx), to), "on_mouse_move", at(20), cx);
+    fire(find(fo.render(cx), to), "on_mouse_up:left", {}, cx);
+  };
+  fire(find(fo.render(cx), "card-t0"), "on_mouse_down:left", at(0), cx);
+  fire(find(fo.render(cx), "card-t0"), "on_mouse_move", at(2), cx);
+  assert.equal(find(fo.render(cx), "pinned"), null, "a click's jitter isn't a drag, and nothing pinned shows no header");
+  fire(find(fo.render(cx), "card-t0"), "on_mouse_up:left", {}, cx);
+  drag("card-vps/t2", "pinned");
+  assert.deepEqual([...f.state["agents.pins"]], ["vps/t2"], "the Pinned header shows while dragging and takes the drop");
+  assert.ok(find(f.load("t3-agents").render(cx), "pinned"), "the agents list shows the same pin");
+  assert.ok(find(fo.render(cx), "active"), "an Active divider follows the pins");
+  drag("card-t0", "card-vps/t2");
+  assert.deepEqual([...f.state["agents.pins"]], ["t0", "vps/t2"], "dropped on a pin, it lands above it");
+  drag("card-t0", "card-vps/t2");
+  assert.deepEqual([...f.state["agents.pins"]], ["vps/t2", "t0"], "a pin moved down lands below");
+  drag("card-t0", "active");
+  assert.deepEqual([...f.state["agents.pins"]], ["vps/t2"], "onto Active unpins");
+  fire(find(fo.render(cx), "card-t0"), "on_mouse_down:left", at(0), cx);
+  fire(find(fo.render(cx), "card-t0"), "on_mouse_move", at(10), cx);
+  fire(fo.render(cx), "on_hover", false, cx);
+  fire(find(fo.render(cx), "pinned"), "on_mouse_up:left", {}, cx);
+  assert.deepEqual([...f.state["agents.pins"]], ["vps/t2"], "leaving the sidebar cancels the drag");
+  fire(find(fo.render(cx), "card-vps/t2"), "on_hover", true, cx);
+  assert.equal(find(fo.render(cx), "settle-vps/t2"), null, "a pin isn't settled away");
 }
 
 {

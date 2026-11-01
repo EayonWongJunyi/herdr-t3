@@ -27,7 +27,7 @@ Ask your Herdr agent to add `herdr.dev/layouts/JinJieBeWater/herdr-t3`. By hand:
 ## Quick start
 
 - **Sidebar**: the button at the top right of the sidebar (or `cmd-shift-b`) switches between Spaces + Agents and Focus; the one next to it hides the sidebar.
-- **Focus**: hover a finished card and click `✓ Settle` to put it away; new work brings it back, or click the undo arrow on its row.
+- **Focus**: hover a finished card and click `✓ Settle` to put it away; new work brings it back, or click the undo arrow on its row. Drag a card onto `Pinned` (shown while dragging) to pin it, within Pinned to reorder, or onto `Active` to unpin; the agents list shares these pins.
 - **Agent view**: the button left of `+` (or `cmd-shift-a`) shows one agent full size; click a card to change which. A new shell, split or anything from `+` brings the tabs back.
 - **Focus ring** (off by default): in `~/.config/herdr-app/layouts/herdr-t3.json`, set the pane's `focus.color` from `"background"` to `"accent"` (or any theme color) to ring the focused pane. It applies on save.
 

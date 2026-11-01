@@ -32,7 +32,11 @@ export default class Agents extends View {
     this.folded = JSON.parse(localStorage.getItem("folded") ?? "{}");
     // Each agent's last state and when it changed (ms), kept across restarts.
     this.changed = JSON.parse(localStorage.getItem("changed") ?? "{}");
-    this.pins = JSON.parse(localStorage.getItem("pins") ?? "[]");
+  }
+
+  // Shared with the focus list (t3-focus): one set of pins. Older installs kept them in this list's storage.
+  get pins() {
+    return shared("agents.pins") ?? JSON.parse(localStorage.getItem("pins") ?? "[]");
   }
 
   isFolded(id, initial = true) {
@@ -63,8 +67,7 @@ export default class Agents extends View {
   }
 
   setPins(pins) {
-    this.pins = pins;
-    localStorage.setItem("pins", JSON.stringify(pins));
+    setShared("agents.pins", pins);
   }
 
   // Drops pins of agents that ended. Only for machines the list has heard from:
