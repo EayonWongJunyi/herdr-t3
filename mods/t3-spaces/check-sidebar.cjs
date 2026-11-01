@@ -299,6 +299,14 @@ for (const width of [180, 200, 240, 268, 480]) {
 }
 
 {
+  // A parent waiting on its sub-agents says how long the longest-working one has worked.
+  const f = fixture(268), fo = f.load("t3-focus");
+  f.agents()[0].status = "idle"; f.terminals().find(c => c.address === "child").status = "idle";
+  f.terminals().find(c => c.address === "grandchild").status_ms = Date.now() - 90000;
+  assert.deepEqual(strings(find(fo.render(cx), "state-t0")), ["Working 1m"], "the waiting parent shows its sub-agent's working time");
+}
+
+{
   const f = fixture(268), sp = f.load("t3-spaces"), ag = f.load("t3-agents");
   let root = sp.render(cx);
   // The Spaces/Agents divider is the layout's own, as upstream: neither list sizes it.
