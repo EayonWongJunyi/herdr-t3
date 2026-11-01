@@ -407,8 +407,8 @@ for (const width of [180, 200, 240, 268, 480]) {
   over("card-vps/t2", 10);
   assert.equal(h("gap-vps/t2"), 84, "the gap is the destination's: a card");
   assert.ok(badge("pin"), "a settled row can be pinned");
-  over("active");
-  assert.equal(h("gap-head-active"), 84);
+  over("active-rest");
+  assert.equal(h("gap-head-active"), 84, "the empty space above the shelves counts as Active");
   assert.ok(badge("unsettle"));
   release();
   assert.deepEqual(f.labelled.pop(), ["label", "t0", "settled="], "dropped on Active, it's unsettled");
