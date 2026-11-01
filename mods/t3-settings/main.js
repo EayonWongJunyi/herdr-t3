@@ -45,7 +45,7 @@ export default class Settings extends View {
       })
       .child(v_flex().flex_1().min_w(0).gap(6)
         .child(div().font_medium().child("Auto release (Pi only)"))
-        .child(div().text_size(12).text_color(t.muted).child("Release idle Pi agents after 30 minutes in Settle. Claude, Codex and other agents stay running.")))
+        .child(div().text_size(12).text_color(t.muted).child("Release idle Pi agents after 30 minutes in Settle.")))
       .child(div().w(34).h(20).p(2).flex_none().rounded_full().bg(auto ? t.accent : t.hover)
         .flex().when(auto, el => el.justify_end())
         .child(div().size(16).rounded_full().bg(auto ? t.accent_foreground : t.muted)));
