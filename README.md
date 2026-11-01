@@ -20,6 +20,47 @@ Ask your Herdr agent to add `herdr.dev/layouts/JinJieBeWater/herdr-t3`. By hand:
 
 No network requests.
 
+## Extras (optional)
+
+Not part of the layout and not copied by an install; add them by hand if you want them.
+
+### pulls.review
+
+`extras/mods/pulls-review/` opens the focused pane's repository in [pulls.review](https://github.com/antfu/pulls.review): its uncommitted changes when there are any, else what pulls.review opens by default (the current branch against the default branch).
+
+- **Needs the CLI from [my fork](https://github.com/JinJieBeWater/pulls.review/tree/multi-repo)** (`multi-repo` branch). The mod runs `pulls.review -d --pwa`: `-d` hands the repo to one background server shared by every repo, `--pwa` opens the installed pulls.review app instead of a browser tab. Upstream pulls.review has neither flag.
+- Local folders only: a pane on another machine shows an error.
+- Install: copy `extras/mods/pulls-review/` into `~/.config/herdr-app/mods/`, then add a key to the `global` section of your `keys.json`: `"cmd-shift-r": "mod.open:pulls-review"`.
+- Runs read-only `git status --porcelain` and `pulls.review`.
+- This layout's tab bar has no button for it; use the key or the command palette.
+
+### Theme and settings from the preview
+
+`extras/themes/t3-plain.json` is the dark theme in the screenshot: canvas and chrome `#141418`, accent and working `#6b93ff`, blocked `#f0a33a`. Copy it into `~/.config/herdr-app/themes/` and pick it in Settings, or set it in `settings.json` with the fonts:
+
+```json
+{
+  "theme": "t3-plain",
+  "appearance": "dark",
+  "font": "Maple Mono NF CN",
+  "ui_font": "Maple Mono NF CN",
+  "font_size": 12,
+  "minimum_contrast": 3
+}
+```
+
+Herdr doesn't ship [Maple Mono NF CN](https://github.com/subframe7536/maple-font): install it, or leave the font lines out to keep Herdr's JetBrains Mono and Geist.
+
+### Keys I use with it
+
+In the `global` section of `keys.json`, besides the layout's own `cmd-shift-b`:
+
+| Key | Command | Does |
+| --- | --- | --- |
+| `cmd-]` / `cmd-[` | `agent.next` / `agent.prev` | Walks agents in the Focus cards' order; settled ones come last |
+| `cmd-p` | `mod.open:picker` | The same picker as Focus's Search |
+| `cmd-shift-r` | `mod.open:pulls-review` | Review the focused repo (needs the extra above) |
+
 ## Credits and license
 
 `t3-chrome`, `t3-spaces`, `t3-agents`, `t3-tabs`, `t3-pane`, `t3-new-menu` and the layout start from Herdr App's shipped `workspace-chrome`, `spaces`, `agents`, `tabs`, `pane`, `new-menu` and `main`. Settle follows T3 Code's design. Apache-2.0, as Herdr App.
