@@ -371,7 +371,7 @@ export default class Agents extends View {
         .text_size(11)
         .font_medium()
         .on_click((_e, cx) => this.toggleFold(g.id, cx, initial))
-        .child(div().min_w(0).truncate().text_color(t[g.status] ?? t.dim).child(g.label))
+        .child(div().min_w(0).truncate().text_color(g.status ? t[g.status] : t.dim).child(g.label))
         .when(byPriority || !open, (el) => el.child(div().text_color(t.dim).child(String(g.members.length))))
         .child(div().flex_1())
         .when(!open, (el) => el
