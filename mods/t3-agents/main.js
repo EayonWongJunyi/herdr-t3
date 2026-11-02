@@ -72,14 +72,18 @@ export default class Agents extends View {
     setShared("agents.pins", pins);
   }
 
-  // Drops pins of agents that ended. Only for machines the list has heard from:
+  // Drops pins and fold choices of agents that ended. Only for machines the list has heard from:
   // right after a start, or while a machine connects, its agents aren't listed yet.
-  prunePins(all) {
+  prune(all) {
     const machine = (addr) => (addr.includes("/") ? addr.split("/")[0] : "");
     const heard = new Set(all.map((k) => machine(k.address)));
     const live = new Set(all.filter((k) => k.state === "live").map((k) => k.address));
     const kept = this.pins.filter((p) => !heard.has(machine(p)) || live.has(p));
     if (kept.length !== this.pins.length) this.setPins(kept);
+    // Group headers (sp-…, sec-…, pinned) fold under the same store; only agents' entries end.
+    const ended = Object.keys(this.folded).filter((k) => !/^(sp-|sec-|pinned$)/.test(k) && heard.has(machine(k)) && !live.has(k));
+    for (const k of ended) delete this.folded[k];
+    if (ended.length) localStorage.setItem("folded", JSON.stringify(this.folded));
   }
 
   since(a) {
@@ -204,7 +208,7 @@ export default class Agents extends View {
     const urgency = new Map(list.map((a) => [a.address, Math.max(this.rank(a), ...this.tree(all, a.address).map((s) => RANK[kidStatus(s.t, this.listed)] ?? 0))]));
     const rankOf = (a) => urgency.get(a.address);
     if (byPriority) list = [...list].sort((x, y) => rankOf(y) - rankOf(x) || this.since(y) - this.since(x) || y.seq - x.seq);
-    this.prunePins(all);
+    this.prune(all);
     const pinned = this.pins.map((p) => list.find((a) => a.address === p)).filter(Boolean);
     const rest = list.filter((a) => !this.pins.includes(a.address));
     list = [...pinned, ...rest];
@@ -213,8 +217,10 @@ export default class Agents extends View {
     const withKids = (a, i) => {
       const subs = this.tree(all, a.address);
       const r = row(a, i, subs);
-      if (this.isFolded(a.address)) return [r];
-      return [r, ...subs.map((s) => this.subRow(t, s, shown))];
+      if (!this.isFolded(a.address)) return [r, ...subs.map((s) => this.subRow(t, s, shown))];
+      // Folded, a sub-agent that needs the person still shows, hung straight from its parent.
+      const stuck = subs.filter((s) => kidStatus(s.t, this.listed) === "blocked");
+      return [r, ...stuck.map((s, j) => this.subRow(t, { t: s.t, depth: 1, lines: [j === stuck.length - 1 ? "└" : "├"] }, shown))];
     };
 
     // Only folded rows show it: open, the indented children below say so, and the icon folds them.

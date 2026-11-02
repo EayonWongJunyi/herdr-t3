@@ -102,8 +102,17 @@ for (const width of [180, 200, 240, 268, 480]) {
   const sp = f.load("t3-spaces"), ag = f.load("t3-agents");
   const st = sp.render(cx);
   let at = ag.render(cx);
-  assert.ok(find(at, "fold-t0") && !find(at, "sub-child"), "sub-agents start folded");
+  assert.ok(find(at, "fold-t0") && !find(at, "sub-grandchild"), "sub-agents start folded");
+  // The child is in error: folded, it still shows, one step in, hung from the parent.
+  assert.equal(find(at, "sub-child").style.pl, 28, "a stuck sub-agent shows under its folded parent");
+  f.terminals().find(k => k.address === "grandchild").status = "blocked";
+  const stuck = ag.render(cx);
+  assert.deepEqual([find(stuck, "sub-child").style.pl, find(stuck, "sub-grandchild").style.pl], [28, 28], "every stuck one hangs straight from the parent");
+  f.terminals().find(k => k.address === "grandchild").status = "working";
   ag.toggleFold("t0", cx);
+  Object.assign(ag.folded, { gone: false, "vps/gone": false, "far/t1": false, "sp-gone": true });
+  ag.render(cx);
+  assert.deepEqual(Object.keys(ag.folded).sort(), ["far/t1", "sp-gone", "t0"], "an ended agent's fold goes; a quiet machine's and group headers stay");
   at = ag.render(cx);
   const space = find(st, "space-s0"), agent = find(at, "ag-t0");
   assert.ok(strings(space).includes("project 0"), `space identity at ${width}`);
@@ -162,7 +171,7 @@ for (const width of [180, 200, 240, 268, 480]) {
   assert.ok(find(at, "sp-s0"), "space group remains visible");
   fire(find(at, "agent-fold-t0"), "on_click", {}, cx);
   at = ag.render(cx);
-  assert.equal(find(at, "sub-child"), null, "descendants fold in place");
+  assert.equal(find(at, "sub-grandchild"), null, "descendants fold in place");
   assert.equal(find(at, "fold-t0").style.min_w, 20);
   assert.equal(find(at, "fold-t0").style.h, 20);
   assert.ok(strings(find(at, "fold-t0")).includes("2"), "folded badge counts descendants");
@@ -212,7 +221,7 @@ for (const width of [180, 200, 240, 268, 480]) {
   fire(find(at, "ag-sort"), "on_click", {}, cx);
   assert.equal(f.overlays.pop().mod, "t3-agents");
   fire(find(at, "agent-fold-t0"), "on_click", {}, cx);
-  assert.equal(find(ag.render(cx), "sub-child"), null);
+  assert.equal(find(ag.render(cx), "sub-grandchild"), null);
   fire(find(ag.render(cx), "agent-fold-t0"), "on_click", {}, cx);
   assert.ok(find(ag.render(cx), "sub-child"));
   const beforePin = f.calls.length;
@@ -586,7 +595,7 @@ for (const width of [180, 200, 240, 268, 480]) {
   assert.equal(find(tree, "ag-t0").items[0].style.size, 18, "missing icons do not shift names");
   assert.equal(inFlow(find(tree, "sub-child"))[0].style.size, 18);
   fire(find(tree, "agent-fold-t0"), "on_click", {}, cx);
-  assert.equal(find(ag.render(cx), "sub-child"), null, "missing icons do not disable folding");
+  assert.equal(find(ag.render(cx), "sub-grandchild"), null, "missing icons do not disable folding");
   const menu = f.load("t3-agents", { sortMenu: true }).render(cx);
   assert.equal(find(menu, "sort-grouped").style.bg, f.theme().selected);
   assert.equal(find(menu, "sort-grouped").hoverStyle.bg, undefined);
