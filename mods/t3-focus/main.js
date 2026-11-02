@@ -25,19 +25,19 @@ const kidStatus = (k, listed) => {
   return s === "error" ? "blocked" : s === "done" ? "idle" : s;
 };
 
+// As T3's sidebar times: no "ago", nothing past days.
 function ago(ms, now) {
   const m = Math.floor((now - ms) / 60000);
-  if (m < 1) return "now";
+  if (m < 1) return "just now";
   if (m < 60) return `${m}m`;
   if (m < 1440) return `${Math.floor(m / 60)}h`;
-  if (m < 10080) return `${Math.floor(m / 1440)}d`;
-  return `${Math.floor(m / 10080)}w`;
+  return `${Math.floor(m / 1440)}d`;
 }
 
-// How long it's been working: seconds, then as ago() counts.
+// How long it's been working, as T3's Working pill: 9s, 4m, 1h 5m.
 function took(ms, now) {
-  const s = Math.floor((now - ms) / 1000);
-  return s < 60 ? `${s}s` : ago(ms, now);
+  const s = Math.max(0, Math.floor((now - ms) / 1000)), m = Math.floor(s / 60);
+  return s < 60 ? `${s}s` : m < 60 ? `${m}m` : `${Math.floor(m / 60)}h ${m % 60}m`;
 }
 
 // The program's icon from the app's table: a one-color glyph or a picture.
@@ -67,6 +67,8 @@ export default class Focus extends View {
     this.keys = cx.focus_handle();
     // "Working 9s" counts up only while such a card shows.
     cx.timer.every(1000, (cx) => { if (this.ticking) cx.notify(); });
+    // The cards' times (5m, 2h) move on by the minute, as T3's do.
+    cx.timer.every(60000, (cx) => cx.notify());
     // `t3-focus.settle` (cmd-shift-s in keys.json): see settleKey in render.
     cx.spawn(async (cx) => {
       for (;;) {
@@ -86,23 +88,34 @@ export default class Focus extends View {
     if (!s) return;
     this.scope = !s.id ? [] : !shift ? [s.id] : this.scope.includes(s.id) ? this.scope.filter((id) => id !== s.id) : [...this.scope, s.id];
     localStorage.setItem("scope", JSON.stringify(this.scope));
+    // A new scope starts the settled tail over, as T3's does.
+    this.limit = FIRST;
     if (!shift) this.scopeOpen = false;
     cx.notify();
   }
 
   // Takes each agent's state as working, blocked or idle (done counts as idle: looking at it isn't news).
-  // A turn ended while we weren't watching is news too. Blocked never waits out the grace.
-  track(list, all, now) {
+  // A run's place in Working is when it started, as T3's is the person's message: a pause for them, or a stop
+  // that goes on within the grace, is the same run. Pinned and settled ones skip the grace, as in T3: their
+  // place doesn't hang on it. A turn ended while we weren't watching is news too.
+  track(list, all, now, cx) {
     let dirty = false;
-    for (const { address, s, turn } of list) {
-      const was = this.changed[address];
+    for (const { address, s, turn, excluded } of list) {
+      let was = this.changed[address];
+      // The grace ran out: back with the person as of then, so it lands on top, and the run is over.
+      if (was?.s === "idle" && was.start != null && (excluded || now - was.at >= GRACE)) {
+        was = this.changed[address] = { s: "idle", at: excluded ? now : was.at + GRACE, turn: was.turn };
+        dirty = true;
+      }
       if (was?.s === s && (s !== "idle" || turn <= (was.turn ?? turn))) continue;
-      // Back to work, or the turn's end arriving, within the grace: the same run, its place kept.
-      const grace = was?.start != null && now - was.at < GRACE && s !== "blocked";
+      const grace = was?.s === "working" && s === "idle" && !excluded;
+      if (grace) cx.timer.after(GRACE, (cx) => cx.notify());
       this.changed[address] = !was ? { s, at: 0, turn } // First sight says nothing about when it changed.
-        : grace && s === "working" ? { s, at: was.start, turn }
-        : grace ? { ...was, turn }
-        : { s, at: now, turn, ...(was.s === "working" && s === "idle" ? { start: was.at } : {}) };
+        : s === "working" ? { s, at: was.start ?? now, turn }
+        : s === "blocked" ? { s, at: now, turn, start: was.s === "working" ? was.at : was.start }
+        : grace ? { s, at: now, turn, start: was.at } // Stopped: the grace begins.
+        : was.start != null && was.s === "idle" ? { ...was, turn } // The turn's end arriving within it.
+        : { s, at: now, turn };
       dirty = true;
     }
     if (!dirty) return;
@@ -165,25 +178,34 @@ export default class Focus extends View {
     const state = (a) => [a.status, ...kids.get(a.address)].reduce((m, s) => ((RANK[s] ?? 0) > (RANK[m] ?? 0) ? s : m));
     // Busy, or waiting on sub-agents it will hear back from; needing the person comes first.
     const running = (a) => state(a) !== "blocked" && (a.status === "working" || kids.get(a.address).includes("working"));
-    this.track(every.map((a) => ({ address: a.address, s: state(a) === "blocked" ? "blocked" : running(a) ? "working" : "idle", turn: term.get(a.address)?.turn ?? 0 })), all, now);
+    // Pins are the agents list's (t3-agents), one set for both: pinned agents stay up top in pin order, whatever their state.
+    const pins = shared("agents.pins") ?? [];
+    this.track(every.map((a) => ({
+      address: a.address, s: state(a) === "blocked" ? "blocked" : running(a) ? "working" : "idle",
+      turn: term.get(a.address)?.turn ?? 0, excluded: pins.includes(a.address) || Boolean(settledAt(a)),
+    })), all, now, cx);
     const mark = (a) => this.changed[a.address];
     // Seen changing, then; before that, the core's time of its last change. terminals() only has that as of
     // the app's start (status_ms isn't updated live), so it serves only until we see a change ourselves.
     const since = (a) => mark(a)?.at || term.get(a.address)?.status_ms || 0;
     // Just stopped: it shows its state now but keeps its Working place until the grace is out.
-    const lingering = (a) => mark(a)?.s === "idle" && mark(a).start != null && now - mark(a).at < GRACE;
+    const lingering = (a) => mark(a)?.s === "idle" && mark(a).start != null;
     // T3's Working shelf.
     const working = (a) => running(a) || lingering(a);
     // Active by when each came back to the person; Working by when its run started.
     const newest = (x, y) => since(y) - since(x) || byAddress(x, y);
     const begun = (a) => (lingering(a) ? mark(a).start || term.get(a.address)?.status_ms || 0 : since(a));
-    // Pins are the agents list's (t3-agents), one set for both: pinned agents stay up top in pin order, whatever their state.
-    const pins = shared("agents.pins") ?? [];
+    // Working since: seen set going; before that, its own report, or for a parent waiting on sub-agents the
+    // longest-working one's.
+    const started = (a) => mark(a)?.at || (a.status === "working" ? term.get(a.address)?.status_ms
+      : Math.min(Infinity, ...this.descendants(all, a.address).filter((k) => kidStatus(k, listed) === "working").map((k) => k.status_ms).filter(Boolean)));
     const pinned = pins.map((p) => list.find((a) => a.address === p)).filter(Boolean);
     const rest = list.filter((a) => !pins.includes(a.address));
     const out = rest.filter((a) => !settledAt(a) && !working(a)).sort(newest);
     const work = rest.filter((a) => !settledAt(a) && working(a)).sort((x, y) => begun(y) - begun(x) || byAddress(x, y));
     const put = rest.filter(settledAt).sort((x, y) => settledAt(y)[0] - settledAt(x)[0] || byAddress(x, y));
+    // Shelves fold by default on this screen; the one in view stays out even folded or past the page, so it's never lost.
+    const busyRows = this.workOpen ? work : work.filter((a) => a.focused);
     // agent.next goes as the list reads. Only while this list shows: the agents list (t3-agents) sets its own.
     const find = (n) => n?.id === "sidebar-lists" ? n : (n?.children ?? []).map(find).find(Boolean);
     if (find(layout())?.active !== "lists") setAgentOrder([...pinned, ...out, ...work, ...put].map((a) => a.address));
@@ -214,11 +236,13 @@ export default class Focus extends View {
       this.changed[a.address] = { ...this.changed[a.address], at: Date.now(), start: null };
       localStorage.setItem("changes", JSON.stringify(this.changed));
     };
-    // Settling the agent in view moves on to the next card; one in the background moves nothing.
+    // Settling the agent in view moves on to the next card down the list, from the top past the end, as T3 does;
+    // one in the background moves nothing.
     const settle = (xs, cx) => {
       for (const a of xs) this.setSettled(a.address, `${Date.now()}:${term.get(a.address)?.turn ?? 0}`, cx);
-      if (!xs.some((a) => a.focused)) return false;
-      const i = out.findIndex((a) => a.focused), next = [...out.slice(i + 1), ...out.slice(0, Math.max(i, 0)).reverse()].find((a) => !xs.includes(a));
+      const cards = [...pinned, ...out, ...busyRows], i = cards.findIndex((a) => a.focused);
+      if (i < 0 || !xs.includes(cards[i])) return false;
+      const next = [...cards.slice(i + 1), ...cards.slice(0, i)].find((a) => !xs.includes(a));
       if (next) run("agent.focus", { terminal: next.address });
       return Boolean(next);
     };
@@ -413,7 +437,7 @@ export default class Focus extends View {
           .child("Settle")
         : running(a)
           ? pill(t.working, svg("mods/workspace-chrome/spinner.svg").size(16).flex_none().text_color(t.working).spin(900),
-            "Working", since(a) > 0 ? took(since(a), now) : null)
+            "Working", started(a) > 0 && started(a) < Infinity ? took(started(a), now) : null)
           : st === "blocked"
             ? pill(t.blocked, div().size(14).flex_none().rounded(4).bg(t.blocked + "26").text_size(11).font_bold().flex().items_center().justify_center().child("!"), "Needs you")
             : st === "done"
@@ -478,10 +502,7 @@ export default class Focus extends View {
       .child(div().child(String(count)))
       .child(svg(`mods/workspace-chrome/chevron-${open ? "down" : "right"}.svg`).size(12).flex_none());
 
-    // Shelves fold by default on this screen; the one in view stays out even folded or past the page, so it's never lost.
-    const busyRows = this.workOpen ? work : work.filter((a) => a.focused);
-    // Also while a run lingers, so it leaves the shelf within a second of its grace running out.
-    this.ticking = busyRows.length > 0 || pinned.some(working) || list.some(lingering);
+    this.ticking = busyRows.length > 0 || pinned.some(working);
     // The first shelf takes the free space above it, so both sit at the bottom.
     const shelves = v_flex().id("shelves").pt(12).flex_none()
       .when(work.length > 0, (el) => el

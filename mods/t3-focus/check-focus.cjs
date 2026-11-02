@@ -127,7 +127,7 @@ test("a finished run moves to Active once the grace is out; blocked moves at onc
   f.render(); a.status = "idle"; f.render(1100);
   f.terms[0].turn++; f.render(2000); // the turn's end arriving late doesn't restart the grace
   f.render(3099); assert.deepEqual(f.working(), ["A", "B"]);
-  assert.ok(f.mod.ticking);
+  assert.ok(f.timers.some((t) => !t.cancelled && t.at === 3100)); // on time, not on the next second's tick
   f.render(3100); assert.deepEqual(f.active(), ["A"]);
   b.status = "blocked"; f.render(3200); assert.deepEqual(f.active(), ["B", "A"]);
   f.terms.push({ address: "kid", parent: "A", state: "live", status: "error" });
@@ -164,10 +164,56 @@ test("a turn that ended unseen is news; unsettling doesn't land on Working", () 
   assert.deepEqual(f.working(), []); assert.deepEqual(f.order, ["A", "B"]);
 });
 
-test("only the sidebar list in view sets agent.next order", () => {
+// Synced alone to herdr-t3-focus, there's no agents list to load.
+const lists = fs.existsSync(path.join(__dirname, "../t3-agents/main.js"));
+test("only the sidebar list in view sets agent.next order", { skip: !lists && "t3-agents isn't here" }, () => {
   const f = fixture(); f.add("A", "working"); f.add("B", "idle", 200); f.render();
   const order = [...f.order], renderAgents = f.loadAgents(); renderAgents();
   assert.deepEqual(f.order, order);
   f.mode = "lists"; renderAgents(); const lists = [...f.order];
   f.render(1500); assert.deepEqual(f.order, lists);
+});
+
+test("a pause for the person keeps the run's Working place", () => {
+  const f = fixture(), a = f.add("A", "working", 100); f.add("B", "working", 200); f.mod.workOpen = true;
+  f.render(); a.status = "blocked"; f.render(1100); assert.deepEqual(f.active(), ["A"]);
+  a.status = "working"; f.render(9000); assert.deepEqual(f.working(), ["B", "A"]);
+});
+
+test("a run out of its grace lands on top of Active, over one that came back meanwhile", () => {
+  const f = fixture(), a = f.add("A", "working"), b = f.add("B", "working"); f.mod.workOpen = true;
+  f.render(); a.status = "idle"; f.render(1100);
+  b.status = "blocked"; f.render(2000); assert.deepEqual(f.active(), ["B"]);
+  f.render(3100); assert.deepEqual(f.active(), ["A", "B"]);
+});
+
+test("pinned agents skip the grace: unpinned right after stopping, it's in Active", () => {
+  const f = fixture(), a = f.add("A", "working"); f.pins = ["A"]; f.mod.workOpen = true;
+  f.render(); a.status = "idle"; f.render(1100);
+  f.pins = []; f.render(1200);
+  assert.deepEqual(f.active(), ["A"]); assert.deepEqual(f.working(), []);
+});
+
+test("Settle in view moves down the cards, then from the top", () => {
+  const go = (focus) => {
+    const f = fixture(); f.add("A", "idle", 300); f.add("B", "idle", 200); f.add("P", "idle", 100); f.pins = ["P"];
+    f.rows.find((a) => a.address === focus).focused = true; f.render(); assert.deepEqual(f.order, ["P", "A", "B"]);
+    f.settle(); return f.calls.at(-1)[1].terminal;
+  };
+  assert.equal(go("A"), "B");
+  assert.equal(go("B"), "P");
+});
+
+test("times read as T3's", () => {
+  const f = fixture(), a = f.add("A", "working"), b = f.add("B", "working"); f.mod.workOpen = true;
+  f.render(); f.render(1000 + 3720000);
+  assert.ok(texts(find(f.tree, "card-A")).includes("1h 2m"));
+  b.status = "idle"; f.render(4000000); f.render(4002000);
+  assert.ok(texts(find(f.tree, "state-B")).includes("just now"));
+  f.render(4002000 + 9 * 86400000); assert.ok(texts(find(f.tree, "state-B")).includes("9d"));
+});
+
+test("a new scope starts the settled tail over", () => {
+  const f = fixture(); f.mod.limit = 35; f.mod.pick({ id: "s1" }, false, f.cx);
+  assert.equal(f.mod.limit, 10);
 });
