@@ -2,7 +2,7 @@
 // A viewed done agent stays in Done until left.
 
 import { View, div, image, svg } from "gpui-kit";
-import { v_flex, h_flex, Button } from "gpui-base";
+import { v_flex, h_flex } from "gpui-base";
 import { agents, terminals, focused, run, theme, shared, setShared, setAgentOrder, openOverlay, closeOverlay, props, layout } from "herdr";
 import { namer } from "./name.js";
 const RANK = { blocked: 4, done: 3, working: 2, idle: 1 };
@@ -24,6 +24,15 @@ const SECTION_STATUS = { 4: "blocked", 3: "done", 2: "working" };
 function icon(p, size, color) {
   if (!p?.icon) return null;
   return p.tint ? svg(p.icon).size(size).flex_none().text_color(color) : image(p.icon).w(size).h(size).flex_none();
+}
+
+// How long it's been in its state, as the shipped agents list says it.
+function duration(ms) {
+  const m = Math.floor(ms / 60000);
+  if (m < 1) return "<1m";
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  return h < 24 ? `${h}h` : `${Math.floor(h / 24)}d`;
 }
 
 export default class Agents extends View {
@@ -225,26 +234,37 @@ export default class Agents extends View {
       return [r, ...stuck.map((s, j) => this.subRow(t, { t: s.t, depth: 1, lines: [j === stuck.length - 1 ? "└" : "├"] }, shown))];
     };
 
-    // Only folded rows show it: open, the indented children below say so, and the icon folds them.
-    // Just a dim count; the row's status carries any hidden child's urgency.
+    // A button's icon and text brighten together: a hover style reaches the text but not the svg, so it's state,
+    // as in Focus. Inside a hovered row a button's own hover fill doesn't show, so this is the cue.
+    const glow = (id) => (on, cx) => {
+      if (on) this.hot = id;
+      else if (this.hot === id) this.hot = null;
+      cx.notify();
+    };
+    const lit = (id) => (this.hot === id ? t.foreground : t.dim);
+    // As the shipped agents list: a parent's fold arrow, and folded, the count. Dim: the row's status
+    // carries any hidden child's urgency.
     const fold = (a, subs) => {
+      const open = !this.isFolded(a.address), id = `fold-${a.address}`;
       return div()
-        .id(`fold-${a.address}`)
+        .id(id)
         .h(20).min_w(20).flex_none()
         .px(4)
+        .gap(3)
         .flex()
         .items_center()
         .justify_center()
         .rounded(4)
         .text_size(11)
-        .role("button").accessibility_label("Expand sub-agents")
-        .text_color(t.dim)
-        .hover((s) => s.bg(t.hover).text_color(t.foreground))
+        .role("button").accessibility_label(open ? "Collapse sub-agents" : "Expand sub-agents")
+        .text_color(lit(id))
+        .hover((s) => s.bg(t.hover)).on_hover(glow(id))
         .on_click((_e, cx) => {
           cx.stop_propagation();
           this.toggleFold(a.address, cx);
         })
-        .child(String(subs.length));
+        .child(svg(`mods/workspace-chrome/chevron-${open ? "down" : "right"}.svg`).size(11).flex_none().text_color(lit(id)))
+        .when(!open, (el) => el.child(String(subs.length)));
     };
 
     // A row's detail is what the agent is on, as Focus, tabs and pane headers name it.
@@ -263,33 +283,30 @@ export default class Agents extends View {
       const machine = a.address.includes("/") ? a.address.split("/")[0] : null;
       const idle = a.status === "idle" && !a.focused;
       const isPinned = this.pins.includes(a.address);
-      // Shown on hover in the status slot: the far edge, nothing moves, no empty gap.
-      const pin = Button.new(`pin-${a.address}`)
+      // Shown on hover in the time's slot, as in the shipped list; the status stays.
+      const pin = div().id(`pin-${a.address}`).role("button")
         .size(20).flex_none().flex().items_center().justify_center()
-        .rounded(4).text_color(t.dim)
+        .rounded(4)
         .accessibility_label(isPinned ? "Unpin" : "Pin")
-        .hover(s => s.bg(t.hover).text_color(t.foreground))
+        .hover(s => s.bg(t.hover)).on_hover(glow(`pin-${a.address}`))
         .on_click((_e, cx) => {
           cx.stop_propagation();
           // Reordering can move the row without a pointer-leave event.
-          this.hovered = null;
+          this.hovered = this.hot = null;
           this.setPins(isPinned ? this.pins.filter((p) => p !== a.address) : [...this.pins, a.address]);
           cx.notify();
         })
-        .child(svg(`mods/workspace-chrome/${isPinned ? "pin-off" : "pin"}.svg`).size(14).flex_none());
+        .child(svg(`mods/workspace-chrome/${isPinned ? "pin-off" : "pin"}.svg`).size(14).flex_none().text_color(lit(`pin-${a.address}`)));
       // A row leads with what the agent is on; an automatic tab number says nothing.
       // Without a space header above (priority, pinned) the space follows, dim, and gives way first.
       const full = byPriority || isPinned;
       const name = full ? more ?? (a.space_name || label(a)) : more ?? (/^\d+$/.test(label(a)) ? a.program?.name || label(a) : label(a));
       const where = full && more && a.space_name && a.space_name !== more ? a.space_name : null;
-      // Hovering a parent turns its icon into the fold toggle, in the same fixed slot.
-      const toggle = subs.length > 0 && this.hovered === a.address
-        ? svg(`mods/workspace-chrome/chevron-${this.isFolded(a.address) ? "right" : "down"}.svg`).size(12).flex_none().text_color(t.foreground)
-        : pic;
       // Folded, the status shows a hidden child when it's more urgent than the agent itself.
       const folded = subs.length > 0 && this.isFolded(a.address);
       const kid = folded ? subs.map((s) => kidStatus(s.t, this.listed)).reduce((m, s) => ((RANK[s] ?? 0) > (RANK[m] ?? 0) ? s : m)) : null;
       const fromKid = (RANK[kid] ?? 0) > (RANK[a.status] ?? 0);
+      const when = this.since(a);
       return h_flex()
         .id(`ag-${a.address}`)
         .relative()
@@ -314,14 +331,17 @@ export default class Agents extends View {
           .when(subs.length > 0, el => el.accessibility_label(this.isFolded(a.address) ? "Expand sub-agents" : "Collapse sub-agents").on_click((_e, cx) => {
             cx.stop_propagation();
             this.toggleFold(a.address, cx);
-          })).when(Boolean(toggle), el => el.child(toggle)))
+          })).when(Boolean(pic), el => el.child(pic)))
         .child(h_flex().flex_1().min_w(0).gap(8).items_center()
           .child(div().min_w(0).truncate().text_color(idle ? t.muted : t.foreground).child(name))
           .when(Boolean(where), el => el.child(div().flex_1().flex_shrink(1000).min_w(0).truncate().text_size(12).text_color(t.dim).child(where))))
         .when(Boolean(machine), el => el.child(div().text_size(11).text_color(t.dim).child(machine)))
         .child(h_flex().id(`controls-${a.address}`).flex_none().items_center().gap(4)
-          .when(folded, el => el.child(fold(a, subs)))
-          .child(this.hovered === a.address ? pin : this.status(t, fromKid ? { status: kid } : a, fromKid ? " (sub-agent)" : "").id(`status-${a.address}`)));
+          .when(subs.length > 0, el => el.child(fold(a, subs)))
+          // The time and the pin share one slot at least the pin's width, so hovering moves nothing else.
+          .child(this.hovered === a.address ? pin
+            : h_flex().id(`when-${a.address}`).min_w(20).flex_none().justify_end().text_size(11).text_color(t.dim).when(Boolean(when), el => el.child(duration(now - when))))
+          .child(this.status(t, fromKid ? { status: kid } : a, fromKid ? " (sub-agent)" : "").id(`status-${a.address}`)));
     };
 
     // Groups in list order: spaces (grouped) or priority sections. Agents of a
