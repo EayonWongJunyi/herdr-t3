@@ -279,11 +279,30 @@ for (const width of [180, 200, 240, 268, 480]) {
   assert.ok(!find(at, "card-vps/t2") && strings(find(at, "settled-header")).includes("1"), "settled leaves the cards for the tail");
   {
     // Clear asks once on the button, then closes settled panes; a space left empty closes whole.
-    const later = { ...run, timer: { after() {} } }, n = f.calls.length;
+    // A fake timer: `due` is the pending revert and its delay, null once cancelled or run.
+    let due = null;
+    const later = { ...run, timer: { after(ms, fn) { const task = { ms, fn, cancel() { if (due === task) due = null; } }; return (due = task); } } };
+    const tick = () => { const { fn } = due; due = null; fn(later); };
+    const label = () => strings(find(fo.render(later), "settled-clear"));
+    const n = f.calls.length;
     f.spaces()[0].tabs[0].active = true;
     fire(find(fo.render(later), "settled-clear"), "on_click", {}, later);
     assert.equal(f.calls.length, n, "the first click only asks");
-    assert.deepEqual(strings(find(fo.render(later), "settled-clear")), ["Clear 1?"]);
+    assert.deepEqual(label(), ["Clear 1?"]);
+    assert.equal(due.ms, 3000, "asked without the pointer (keyboard), the ask ends on its own");
+    tick();
+    assert.deepEqual(label(), ["Clear"]);
+    fire(find(fo.render(later), "settled-clear"), "on_hover", true, later);
+    fire(find(fo.render(later), "settled-clear"), "on_click", {}, later);
+    assert.equal(due, null, "under the pointer the ask stays");
+    fire(find(fo.render(later), "settled-clear"), "on_hover", false, later);
+    assert.equal(due.ms, 400, "leaving the button ends the ask shortly");
+    fire(find(fo.render(later), "settled-clear"), "on_hover", true, later);
+    assert.equal(due, null, "coming back in time keeps it");
+    assert.deepEqual(label(), ["Clear 1?"]);
+    fire(find(fo.render(later), "settled-clear"), "on_click", { click_count: 2 }, later);
+    assert.equal(f.calls.length, n, "a double-click's second click doesn't clear");
+    assert.deepEqual(label(), ["Clear 1?"]);
     f.panes().push({ pane: "p9", tab: "b2", terminal: "t9" });
     fire(find(fo.render(later), "settled-clear"), "on_click", {}, later);
     assert.deepEqual(f.calls.splice(n), [["pane.close", { pane: "p2" }], ["space.select", { id: "s0" }], ["tab.select", { id: "b0" }]], "another pane keeps the space");
@@ -292,9 +311,13 @@ for (const width of [180, 200, 240, 268, 480]) {
     fire(find(fo.render(later), "settled-clear"), "on_click", {}, later);
     assert.deepEqual(f.calls.splice(n), [["tab.new", { space: "s2", folder: "/work/s2" }], ["pane.close", { pane: "p2" }],
       ["space.select", { id: "s0" }], ["tab.select", { id: "b0" }]], "an emptied space keeps a fresh shell tab where its terminal was, not where the space began");
+    fire(find(fo.render(later), "settled-clear"), "on_click", {}, later);
+    assert.equal(due, null, "asked under the pointer: no timer");
     remote.focused = true;
     assert.equal(find(fo.render(later), "settled-clear"), null, "the agent in view is never cleared");
     remote.focused = false;
+    assert.deepEqual(label(), ["Clear"], "a button that went away under the pointer comes back unasked");
+    assert.equal(f.calls.length, n);
   }
   remote.focused = true;
   fo.render(run);
