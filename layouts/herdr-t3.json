@@ -70,9 +70,9 @@
         }
       ],
       "size": {
-        "px": 268
+        "px": 256
       },
-      "min": 180,
+      "min": 208,
       "max": 480,
       "background": "chrome",
       "resizable": false

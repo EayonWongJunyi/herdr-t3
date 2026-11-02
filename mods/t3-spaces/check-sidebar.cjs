@@ -97,7 +97,7 @@ function fixture(width) {
   return { ...env, load, slots, state, calls, overlays, stores, labelled, shown };
 }
 
-for (const width of [180, 200, 240, 268, 480]) {
+for (const width of [208, 240, 256, 320, 480]) {
   const f = fixture(width);
   const sp = f.load("t3-spaces"), ag = f.load("t3-agents");
   const st = sp.render(cx);
@@ -270,7 +270,7 @@ for (const width of [180, 200, 240, 268, 480]) {
 }
 
 {
-  const f = fixture(180), ag = f.load("t3-agents");
+  const f = fixture(208), ag = f.load("t3-agents");
   for (const status of ["working", "blocked", "idle", "done"]) {
     const slot = ag.status(f.theme(), { status });
     assert.equal(slot.style.size, 20, `${status} keeps the same status column`);
@@ -289,7 +289,7 @@ for (const width of [180, 200, 240, 268, 480]) {
 
 {
   // The focus sidebar: Working holds busy trees; Settle is by hand, undone by new work, never by looking.
-  const f = fixture(268), fo = f.load("t3-focus"), run = { ...cx, spawn: fn => { fn(run); } };
+  const f = fixture(256), fo = f.load("t3-focus"), run = { ...cx, spawn: fn => { fn(run); } };
   const remote = f.agents()[1], k = f.terminals().find(k => k.address === "vps/t2"), child = f.terminals().find(c => c.address === "child");
   child.status = "idle";
   assert.deepEqual(strings(find(fo.render(run), "working-header")), ["Working", "1"], "a working tree moves down to Working");
@@ -382,7 +382,7 @@ for (const width of [180, 200, 240, 268, 480]) {
 
 {
   // A parent waiting on its sub-agents says how long the longest-working one has worked.
-  const f = fixture(268), fo = f.load("t3-focus");
+  const f = fixture(256), fo = f.load("t3-focus");
   f.agents()[0].status = "idle"; f.terminals().find(c => c.address === "child").status = "idle";
   f.terminals().find(c => c.address === "grandchild").status_ms = Date.now() - 90000;
   assert.deepEqual(strings(find(fo.render(cx), "state-t0")), ["Working", "1m"], "the waiting parent shows its sub-agent's working time");
@@ -392,7 +392,7 @@ for (const width of [180, 200, 240, 268, 480]) {
   // Dragging, as T3's sidebar: labels and gaps open only while a row is lifted; Pinned pins and reorders,
   // Active unpins and unsettles, Settled settles; empty sections take drops; Esc, leaving, or a row
   // vanishing put it back; Working never lifts; a sweep from Settle or undo takes a run of rows along.
-  const f = fixture(268), run = { ...cx, spawn: fn => { fn(run); } }, fo = f.load("t3-focus");
+  const f = fixture(256), run = { ...cx, spawn: fn => { fn(run); } }, fo = f.load("t3-focus");
   for (const a of f.agents()) { a.status = "done"; a.focused = false; }
   for (const k of f.terminals()) if (k.parent) k.status = "idle";
   const t0 = f.terminals().find(k => k.address === "t0");
@@ -513,7 +513,7 @@ for (const width of [180, 200, 240, 268, 480]) {
   assert.deepEqual(f.calls.slice(before), [["pane.focus", { pane: "p9" }]], "and the release still hands the keyboard back");
   assert.equal(f.labelled.length, n, "none of those changed anything");
   // Off the bottom edge, past the Settled shelf, it lands where the badge said (Herdr reports no release outside).
-  fire(root(), "on_size_change", { width: 268, height: 900 }, run);
+  fire(root(), "on_size_change", { width: 256, height: 900 }, run);
   for (const k of f.terminals()) if (k.address === "vps/t2") k.labels = {};
   lift("card-vps/t2");
   fire(root(), "on_mouse_move", { position: { x: 0, y: 40 }, local_position: { x: 130, y: 895 } }, run);
@@ -527,12 +527,12 @@ for (const width of [180, 200, 240, 268, 480]) {
   release();
   assert.ok(!f.calls.slice(calls).some(([name]) => name === "agent.focus"), "a drag's release doesn't open the row");
 
-  const old = fixture(268);
+  const old = fixture(256);
   old.stores.set("t3-agents", new Map([["pins", '["t0"]']]));
   old.load("t3-agents");
   assert.deepEqual([...old.state["agents.pins"]], ["t0"], "older pins move to the shared set, so a drag in Focus keeps them");
 
-  const w = fixture(268), wf = w.load("t3-focus");
+  const w = fixture(256), wf = w.load("t3-focus");
   for (const k of w.terminals()) if (k.parent) k.status = "idle";
   fire(find(wf.render(cx), "card-t0"), "on_mouse_down:left", { position: { x: 0, y: 0 }, local_position: { x: 0, y: 10 }, bounds: { height: 80 } }, cx);
   fire(wf.render(cx), "on_mouse_move", { position: { x: 0, y: 30 }, local_position: { x: 0, y: 130 } }, cx);
@@ -540,7 +540,7 @@ for (const width of [180, 200, 240, 268, 480]) {
 }
 
 {
-  const f = fixture(268), sp = f.load("t3-spaces"), ag = f.load("t3-agents");
+  const f = fixture(256), sp = f.load("t3-spaces"), ag = f.load("t3-agents");
   let root = sp.render(cx);
   // The Spaces/Agents divider is the layout's own, as upstream: neither list sizes it.
   for (const tree of [root, ag.render(cx)]) assert.equal(walk(tree).filter(n => "on_size_change" in n.handlers).length, 0, "no list measures itself to move the divider");
@@ -616,7 +616,7 @@ for (const width of [180, 200, 240, 268, 480]) {
 }
 
 {
-  const f = fixture(268), first = f.spaces()[0].tabs[0];
+  const f = fixture(256), first = f.spaces()[0].tabs[0];
   Object.assign(first, { active: true, status: "working" });
   f.spaces()[0].tabs.push({ id: "other", name: "other task", active: false });
   const tabs = f.load("t3-tabs"), root = tabs.render(cx);
@@ -717,7 +717,7 @@ for (const width of [180, 200, 240, 268, 480]) {
 }
 {
   // Icons: every UI glyph drawn is a file that exists.
-  const f = fixture(268);
+  const f = fixture(256);
   f.spaces()[0].tabs[0].status = "blocked";
   const trees = [f.load("t3-tabs").render(cx), f.load("t3-agents").render(cx), f.load("t3-spaces").render(cx), f.load("t3-chrome").render(cx), f.load("t3-chrome", { footer: true }).render(cx), f.load("t3-pane", { pane: "p0" }).render(cx)].flatMap(walk);
   const glyphs = trees.filter(n => n.kind === "svg").map(n => n.source).filter(s => !s.endsWith("/spinner.svg") && s !== "icons/pi.svg");
@@ -728,8 +728,8 @@ for (const width of [180, 200, 240, 268, 480]) {
 }
 (async () => {
   {
-    const f = fixture(268);
+    const f = fixture(256);
     assert.equal(find(f.load("t3-tabs").render(cx), "pulls-review"), null, "no review button");
   }
-  console.log("ok: sidebar widths 180/200/240/268/480, pins, tree, colors, space drag, search/settings, tabs and pane controls, focus sidebar Working/Settle.");
+  console.log("ok: sidebar widths 208/240/256/320/480, pins, tree, colors, space drag, search/settings, tabs and pane controls, focus sidebar Working/Settle.");
 })().catch(e => { console.error(e); process.exit(1); });
