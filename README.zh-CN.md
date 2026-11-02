@@ -31,6 +31,26 @@
 - **Agent 模式**：`+` 左边的按钮（或 `cmd-shift-a`）把一个 agent 铺满显示，点侧栏卡片切换显示哪个。新开 shell、分屏或从 `+` 启动东西时会自动回到标签模式。
 - **聚焦边框**（默认关闭）：把 `~/.config/herdr-app/layouts/herdr-t3.json` 里窗格的 `focus.color` 从 `"background"` 改成 `"accent"`（或其他主题色），聚焦的窗格就会有边框。保存即生效。
 
+## 快捷键
+
+布局自带的，写在 `keys.json` 的 `layout:herdr-t3` 里（安装时会合并进去）：
+
+| 快捷键 | 命令 | 作用 |
+| --- | --- | --- |
+| `cmd-shift-b` | `t3-chrome.sidebar` | 侧栏在 Spaces + Agents 和 Focus 之间切换 |
+| `cmd-shift-a` | `t3-tabs.view` | 进出 Agent 模式 |
+| `cmd-shift-s` | `t3-focus.settle` | Settle 当前查看的 agent 并跳到下一张卡片，已 Settle 的则取回。只在显示 Focus 时生效；忙着的或置顶的不动 |
+
+我自己加在 `global` 里的：
+
+| 快捷键 | 命令 | 作用 |
+| --- | --- | --- |
+| `cmd-]` / `cmd-[` | `agent.next` / `agent.prev` | 按 Focus 卡片的顺序切换 agent，已 Settle 的排在最后 |
+| `cmd-p` | `mod.open:picker` | 和 Focus 顶栏的 Search 是同一个选择器 |
+| `cmd-shift-r` | `mod.open:pulls-review` | 审阅当前仓库（需要 pulls.review 扩展） |
+
+标签、space 和窗格沿用 Herdr 自己的快捷键。Focus 里的置顶、拖动和 Clear 用鼠标。
+
 ## 更新
 
 Herdr 不会更新别人做的 mod 和布局。再添加一次也不行：安装从不覆盖已有文件，只会装出一份改了名的副本（如 `t3-focus-2`）。更新要靠覆盖：
@@ -77,16 +97,6 @@ Herdr 不会更新别人做的 mod 和布局。再添加一次也不行：安装
 ```
 
 Herdr 不自带 [Maple Mono NF CN](https://github.com/subframe7536/maple-font)：先安装它，或者删掉字体这几行，沿用 Herdr 的 JetBrains Mono 和 Geist。
-
-### 我配套用的快捷键
-
-写在 `keys.json` 的 `global` 里，另外还有布局自带的 `cmd-shift-b`、`cmd-shift-a` 和 `cmd-shift-s`：
-
-| 快捷键 | 命令 | 作用 |
-| --- | --- | --- |
-| `cmd-]` / `cmd-[` | `agent.next` / `agent.prev` | 按 Focus 卡片的顺序切换 agent，已 Settle 的排在最后 |
-| `cmd-p` | `mod.open:picker` | 和 Focus 顶栏的 Search 是同一个选择器 |
-| `cmd-shift-r` | `mod.open:pulls-review` | 审阅当前仓库（需要上面的扩展） |
 
 ## 致谢与许可证
 

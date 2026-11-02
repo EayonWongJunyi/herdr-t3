@@ -31,6 +31,26 @@ Ask your Herdr agent to add `herdr.dev/layouts/JinJieBeWater/herdr-t3`. By hand:
 - **Agent view**: the button left of `+` (or `cmd-shift-a`) shows one agent full size; click a card to change which. A new shell, split or anything from `+` brings the tabs back.
 - **Focus ring** (off by default): in `~/.config/herdr-app/layouts/herdr-t3.json`, set the pane's `focus.color` from `"background"` to `"accent"` (or any theme color) to ring the focused pane. It applies on save.
 
+## Keys
+
+The layout's own, in the `layout:herdr-t3` section of `keys.json` (an install merges them):
+
+| Key | Command | Does |
+| --- | --- | --- |
+| `cmd-shift-b` | `t3-chrome.sidebar` | Switches the sidebar between Spaces + Agents and Focus |
+| `cmd-shift-a` | `t3-tabs.view` | Agent view on or off |
+| `cmd-shift-s` | `t3-focus.settle` | Settles the agent in view and moves to the next card, or brings it back if it's settled. Only while Focus shows; a busy or pinned agent stays |
+
+What I add to the `global` section:
+
+| Key | Command | Does |
+| --- | --- | --- |
+| `cmd-]` / `cmd-[` | `agent.next` / `agent.prev` | Walks agents in the Focus cards' order; settled ones come last |
+| `cmd-p` | `mod.open:picker` | The same picker as Focus's Search |
+| `cmd-shift-r` | `mod.open:pulls-review` | Review the focused repo (needs the pulls.review extra) |
+
+Tabs, spaces and panes keep Herdr's own keys. Pinning, dragging and Clear in Focus are by mouse.
+
 ## Update
 
 Herdr doesn't update mods or layouts from others, and adding this again would install a renamed second copy (`t3-focus-2`), since an install never overwrites. Update by overwriting instead:
@@ -77,16 +97,6 @@ Not part of the layout and not copied by an install; add them by hand if you wan
 ```
 
 Herdr doesn't ship [Maple Mono NF CN](https://github.com/subframe7536/maple-font): install it, or leave the font lines out to keep Herdr's JetBrains Mono and Geist.
-
-### Keys I use with it
-
-In the `global` section of `keys.json`, besides the layout's own `cmd-shift-b`, `cmd-shift-a` and `cmd-shift-s`:
-
-| Key | Command | Does |
-| --- | --- | --- |
-| `cmd-]` / `cmd-[` | `agent.next` / `agent.prev` | Walks agents in the Focus cards' order; settled ones come last |
-| `cmd-p` | `mod.open:picker` | The same picker as Focus's Search |
-| `cmd-shift-r` | `mod.open:pulls-review` | Review the focused repo (needs the extra above) |
 
 ## Credits and license
 
