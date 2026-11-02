@@ -199,6 +199,14 @@ for (const width of [180, 200, 240, 268, 480]) {
   fire(space, "on_mouse_down:left", {}, cx);
   fire(space, "on_mouse_up:left", {}, cx);
   assert.deepEqual(f.calls.pop(), ["space.select", { id: "s0" }]);
+  // In the agent view a space shows its agent, or the tabs when it has none.
+  f.slots.view = { id: "view", active: "agent" };
+  for (const id of ["space-s2", "space-s1"]) {
+    fire(find(st, id), "on_mouse_down:left", {}, cx);
+    fire(find(st, id), "on_mouse_up:left", {}, cx);
+  }
+  assert.deepEqual(f.calls.splice(-3), [["agent.focus", { terminal: "vps/t2" }], ["layout.select", { stack: "view", child: "main" }], ["space.select", { id: "s1" }]]);
+  delete f.slots.view;
   fire(find(st, "space-s2"), "on_mouse_down:right", {}, cx);
   assert.deepEqual(JSON.parse(JSON.stringify(f.overlays.pop().props.target)), { id: "s2" });
   fire(find(at, "ag-sort"), "on_click", {}, cx);
