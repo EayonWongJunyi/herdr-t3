@@ -376,7 +376,7 @@ for (const width of [180, 200, 240, 268, 480]) {
   const f = fixture(268), fo = f.load("t3-focus");
   f.agents()[0].status = "idle"; f.terminals().find(c => c.address === "child").status = "idle";
   f.terminals().find(c => c.address === "grandchild").status_ms = Date.now() - 90000;
-  assert.deepEqual(strings(find(fo.render(cx), "state-t0")), ["Working 1m"], "the waiting parent shows its sub-agent's working time");
+  assert.deepEqual(strings(find(fo.render(cx), "state-t0")), ["Working", "1m"], "the waiting parent shows its sub-agent's working time");
 }
 
 {
