@@ -286,6 +286,20 @@ for (const width of [180, 200, 240, 268, 480]) {
   const at = fo.render(run);
   assert.ok(!find(at, "card-vps/t2") && strings(find(at, "settled-header")).includes("1"), "settled leaves the cards for the tail");
   {
+    // The settle key (t3-focus.settle) acts on the agent in view: a busy one stays, a settled one comes back, then goes again.
+    const t0 = f.agents()[0], n = f.labelled.length;
+    fo.render(run); fo.settleKey(run);
+    assert.equal(f.labelled.length, n, "the key doesn't settle a working agent");
+    t0.focused = false; remote.focused = true;
+    fo.render(run); fo.settleKey(run);
+    assert.deepEqual(f.labelled.pop(), ["label", "vps/t2", "settled="], "on a settled agent the key brings it back");
+    fo.render(run); fo.settleKey(run);
+    const [, , again] = f.labelled.pop();
+    assert.match(again, /^settled=\d+:4$/, "and settles it again");
+    k.labels = { settled: again.slice(8) };
+    t0.focused = true; remote.focused = false;
+  }
+  {
     // Clear asks once on the button, then closes settled panes; a space left empty closes whole.
     // A fake timer: `due` is the pending revert and its delay, null once cancelled or run.
     let due = null;

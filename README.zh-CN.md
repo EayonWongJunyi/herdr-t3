@@ -27,7 +27,7 @@
 ## 快速上手
 
 - **侧栏**：侧栏右上角的按钮（或 `cmd-shift-b`）在 Spaces + Agents 和 Focus 之间切换；旁边那个按钮隐藏侧栏。
-- **Focus**：鼠标移到已结束的卡片上，点 `✓ Settle` 收起；有新工作时它会自己回来，也可以点那一行的撤销箭头拿回来。卡片和行可以像 T3 一样拖动：移动 6px 即拿起；`Pinned` 和 `Active` 标签展开，拿起的行标出松开后的动作（Pin、Unpin、Settle、Un-settle），列表在落点让出位置。Pinned 保留你排的顺序，Active 和 Settled 按各自的排序。按 Esc 或从侧栏左右两侧拖出放回原处，从上下边缘拖出则按标记落下；Working 卡片拿不起来。按住卡片的 `✓ Settle`（或已 Settle 行的撤销箭头）划过多行，可以一次 Settle（或取回）整段。和 Agents 列表共用同一份置顶。
+- **Focus**：鼠标移到已结束的卡片上，点 `✓ Settle` 收起；有新工作时它会自己回来，也可以点那一行的撤销箭头拿回来。`cmd-shift-s` Settle 当前查看的 agent，已 Settle 的则取回；配合 `cmd-]` 可以逐张看完、逐张 Settle。卡片和行可以像 T3 一样拖动：移动 6px 即拿起；`Pinned` 和 `Active` 标签展开，拿起的行标出松开后的动作（Pin、Unpin、Settle、Un-settle），列表在落点让出位置。Pinned 保留你排的顺序，Active 和 Settled 按各自的排序。按 Esc 或从侧栏左右两侧拖出放回原处，从上下边缘拖出则按标记落下；Working 卡片拿不起来。按住卡片的 `✓ Settle`（或已 Settle 行的撤销箭头）划过多行，可以一次 Settle（或取回）整段。和 Agents 列表共用同一份置顶。
 - **Agent 模式**：`+` 左边的按钮（或 `cmd-shift-a`）把一个 agent 铺满显示，点侧栏卡片切换显示哪个。新开 shell、分屏或从 `+` 启动东西时会自动回到标签模式。
 - **聚焦边框**（默认关闭）：把 `~/.config/herdr-app/layouts/herdr-t3.json` 里窗格的 `focus.color` 从 `"background"` 改成 `"accent"`（或其他主题色），聚焦的窗格就会有边框。保存即生效。
 
@@ -80,7 +80,7 @@ Herdr 不自带 [Maple Mono NF CN](https://github.com/subframe7536/maple-font)�
 
 ### 我配套用的快捷键
 
-写在 `keys.json` 的 `global` 里，另外还有布局自带的 `cmd-shift-b` 和 `cmd-shift-a`：
+写在 `keys.json` 的 `global` 里，另外还有布局自带的 `cmd-shift-b`、`cmd-shift-a` 和 `cmd-shift-s`：
 
 | 快捷键 | 命令 | 作用 |
 | --- | --- | --- |
