@@ -18,11 +18,14 @@ Only want the Settle sidebar? It is also published alone: [herdr-t3-focus](https
 - **One name everywhere**: Focus cards, the agents list, tabs and pane headers name a terminal the same way: its Pi session, then a tab you named, then a telling terminal title, else the program. Two Pis in one tab read as their own sessions.
 - **The same status marks everywhere**: a spinner while working, `!` when blocked, a dot when done. While Focus shows, a settled agent's done dot leaves the tabs and pane headers too.
 - **Slim tabs, framed panes**: 28px pill tabs; rounded panes with a 28px header (name, folder, status; split, zoom and close on hover).
-- **New**: the tab bar's `+` opens a terminal tab in the current space; the sidebar's New tab picks a space (or a new one) first. No agent picker: start agents in the terminal.
+- **New**: the tab bar's `+` opens a clone of Herdr's default menu: Terminal, Open in VS Code, installed agents, New space, New worktree and Open worktree. Opening it from agent view returns to tabs. The sidebar's New tab still picks a space (or a new one) for a terminal tab.
+- **Files and Changes**: buttons at the top right open Herdr's file browser or Git changes panel. Click the selected button again to close it; each space remembers its panel choice. Both work in tab and agent views.
 
 ## Install
 
-Ask your Herdr agent to add `herdr.dev/layouts/JinJieBeWater/herdr-t3`. By hand: copy `layouts/herdr-t3.json`, `layouts/herdr-t3.svg` and every `mods/t3-*` into `~/.config/herdr-app/`, merge `keys.json` into yours. How it should look and behave: [RECIPE.md](RECIPE.md).
+Ask your Herdr agent to add `herdr.dev/layouts/JinJieBeWater/herdr-t3`. By hand: copy `layouts/herdr-t3.json`, `layouts/herdr-t3.svg` and every `mods/t3-*` plus `mods/open-vscode/` into `~/.config/herdr-app/`, merge `keys.json` into yours. How it should look and behave: [RECIPE.md](RECIPE.md).
+
+The bundled [open-vscode](https://github.com/CacaoRick/herdr-open-vscode) mod opens the focused terminal folder with `cmd-g` or **+ → Open in VS Code**. It needs VS Code locally and Remote - SSH for remote folders. On Windows/Linux, replace the `global` `cmd-g` binding with `ctrl-shift-g`; merge only the key for your system and preserve existing bindings. Optional SSH aliases go in the installed `mods/open-vscode/hosts.json`.
 
 ## Quick start
 
@@ -41,6 +44,8 @@ The layout's own, in the `layout:herdr-t3` section of `keys.json` (an install me
 | `cmd-shift-a` | `t3-tabs.view` | Agent view on or off |
 | `cmd-shift-s` | `t3-focus.settle` | Settles the agent in view and moves to the next card, or brings it back if it's settled. Only while Focus shows; a busy or pinned agent stays |
 
+The bundled `global` binding is `cmd-g` → `mod.open:open-vscode`.
+
 What I add to the `global` section:
 
 | Key | Command | Does |
@@ -55,7 +60,7 @@ Tabs, spaces and panes keep Herdr's own keys. Pinning, dragging and Clear in Foc
 
 Herdr doesn't update mods or layouts from others, and adding this again would install a renamed second copy (`t3-focus-2`), since an install never overwrites. Update by overwriting instead:
 
-- Tell your Herdr agent: "Update Herdr T3 from github.com/JinJieBeWater/herdr-t3: overwrite my installed `mods/t3-*` and `layouts/herdr-t3.*` with the repo's latest, then run `herdr-app check` on each mod." If the first install renamed something because of a clash, overwrite under that name.
+- Tell your Herdr agent: "Update Herdr T3 from github.com/JinJieBeWater/herdr-t3: overwrite my installed `mods/t3-*`, `mods/open-vscode/` (preserving `hosts.json`) and `layouts/herdr-t3.*` with the repo's latest, then run `herdr-app check` on each mod." If the first install renamed something because of a clash, overwrite under that name.
 - By hand: copy the same files over the old ones. Mods reload by themselves on save; no restart.
 - Kept: pins, folds, sort, the Settled shelf and settled agents. They live in `data/`, `shared.json` and terminal labels, not in the mod folders. Lost: your own edits to the overwritten files, including the focus ring color; set it again after overwriting the layout.
 - `keys.json` and the extras stay as they are; compare them with the repo only if the commit log mentions them. Commits marked `!` rename things (for example `refactor!: rename the layout and theme to herdr-t3`); follow what they rename.
@@ -65,7 +70,9 @@ Herdr doesn't update mods or layouts from others, and adding this again would in
 - `t3-spaces`: read-only `git status` / `git rev-parse` in your spaces' folders, watches those repos for changes (`watchFolder`), and `hc machine ls --json`.
 - `t3-focus`: `hc label <agent> settled=<ms>:<turn>` when an agent is settled or unsettled.
 
-No network requests.
+- `open-vscode`: local `code` or the OS opener (`open`, `xdg-open`, or PowerShell), plus `hc machine ls --json` for remote folders; reads its optional `hosts.json`. Remote - SSH handles the connection.
+
+The mods make no network requests of their own.
 
 ## Extras (optional)
 
@@ -99,7 +106,7 @@ Herdr doesn't ship [Maple Mono NF CN](https://github.com/subframe7536/maple-font
 
 ## Credits and license
 
-`t3-chrome`, `t3-spaces`, `t3-agents`, `t3-tabs`, `t3-pane`, `t3-new-menu` and the layout start from Herdr App's shipped `workspace-chrome`, `spaces`, `agents`, `tabs`, `pane`, `new-menu` and `main`. Settle follows T3 Code's design. Apache-2.0, as Herdr App.
+`t3-chrome`, `t3-spaces`, `t3-agents`, `t3-tabs`, `t3-pane`, `t3-new-menu` and the layout start from Herdr App's shipped `workspace-chrome`, `spaces`, `agents`, `tabs`, `pane`, `new-menu` and `main`. Settle follows T3 Code's design. Apache-2.0, as Herdr App. `t3-tab-menu` is a clone of the shipped `new-menu` with an Open in VS Code row. `mods/open-vscode/` comes from [CacaoRick/herdr-open-vscode](https://github.com/CacaoRick/herdr-open-vscode) under MIT; its license and source revision are included in that folder.
 
 ## More
 

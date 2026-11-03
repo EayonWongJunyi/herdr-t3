@@ -717,7 +717,7 @@ for (const width of [208, 240, 256, 320, 480]) {
   fire(find(root, "tab-other"), "on_mouse_down:right", {}, cx);
   assert.equal(f.overlays.pop().props.target.id, "other");
   fire(find(root, "tab-new"), "on_click", {}, cx);
-  assert.deepEqual(f.calls.pop(), ["tab.new", {}], "the tab bar's + opens a tab in its space");
+  assert.equal(f.overlays.pop().mod, "t3-tab-menu", "the tab bar's + opens the default menu clone with Open in VS Code");
   fire(find(root, "close-b0"), "on_click", {}, cx);
   assert.deepEqual(f.calls.pop(), ["tab.close", { id: "b0" }]);
   const pane = f.load("t3-pane", { pane: "p0" });

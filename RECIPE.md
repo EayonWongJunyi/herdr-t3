@@ -15,12 +15,14 @@ Left to right, divider 1px `border`:
     - **Focus**: the T3 sidebar. Cards for the agents that need you, a folded Working shelf and a folded Settled shelf at the bottom. Active goes by when each came back to you, Working by when its run started, Settled by when it was settled, ties by address; a run that stops stays on Working 2s (a blocked one leaves at once; pinned and settled ones skip it), then lands on top of Active, so a quick continuation doesn't move it, nor does a pause for you; looking at a card moves nothing (see `mods/t3-focus`; the [standalone recipe](https://github.com/JinJieBeWater/herdr-t3-focus/blob/main/RECIPE.md) describes it fully).
   - **Footer** (41px, top border): a Settings row, with a 6px `accent` dot when an app update is ready.
 - **Work column**:
-  - **Tabs** (40px, drags the window): the active space's tabs as 28px pills (radius 6, `selected` when active), program icon, name (a tab nobody named reads as its agent, else its focused pane, by the naming rule below), a spinner when working, `!` badge when blocked, a 7px `done` dot when done and unseen; close `×` on the active one. Then a 26px view toggle (`square` icon: show one agent; `layers`: show tabs) and `+` (`tab.new`: a terminal tab in the active space). In the agent view the pills give way to an agent bar: program icon, the agent's name (`foreground`), its space (`dim`), its state mark. Window buttons on Windows. With the sidebar hidden, a sidebar toggle at the left also counts agents: blocked, working, done.
+  - **Tabs** (40px, drags the window): the active space's tabs as 28px pills (radius 6, `selected` when active), program icon, name (a tab nobody named reads as its agent, else its focused pane, by the naming rule below), a spinner when working, `!` badge when blocked, a 7px `done` dot when done and unseen; close `×` on the active one. Then a 26px view toggle (`square` icon: show one agent; `layers`: show tabs) and `+` (`t3-tab-menu`, a default-menu clone with Open in VS Code, 250×543), followed by Files and Changes buttons with icons and text. In the agent view the pills give way to an agent bar: program icon, the agent's name (`foreground`), its space (`dim`), its state mark. Window buttons on Windows. With the sidebar hidden, a sidebar toggle at the left also counts agents: blocked, working, done.
   - **Work body** (padding 2/8, gap 8), one of two (a stack):
     - **Panes**, the active tab: radius 8, `background` fill, a 2px focus ring, off by default (`focus.color` is `background`; set it to `accent` to show it. The border is the same 2px in `background`, so focusing doesn't resize the terminal), even a lone pane framed. Each has a 28px header on top: program icon, agent name or terminal title (13px medium, `foreground` when focused), folder, state mark, and buttons split right, split down, zoom/unzoom, close (shown on hover).
     - **Agent view**: one agent's terminal full size, `background` fill, radius 8, no header.
   - 6px bottom inset; the shipped `workspace-status` bar is in the layout but hidden.
-- **New menu** (`t3-new-menu`, popup 520×420 at the top): pick a space for a new terminal tab (`tab.new`), or New space (`space.new`); `⌘1…` pick spaces by number.
+- **Right panel**: a resizable 368px column (min 280, max 900), hidden initially, beside the tab/agent view. Its stack shows the shipped `files` or `changes` mod. Buttons follow shared `workspace.panels` (both enabled by default), highlight the active panel, switch panels or close the selected one, and remember the choice per space in `t3-tabs` local storage.
+- **Tab-bar New menu** (`t3-tab-menu`, popup 250×543): a clone of Herdr's menu for Terminal, Open in VS Code, installed agents, New space, New worktree and Open worktree. The VS Code row shows `cmd-g`, is disabled without a space, and opens the focused terminal folder locally or through Remote - SSH. The `+` button switches agent view back to tabs before opening it.
+- **Sidebar New menu** (`t3-new-menu`, popup 520×420 at the top): pick a space for a new terminal tab (`tab.new`), or New space (`space.new`); `⌘1…` pick spaces by number.
 
 ## How it behaves
 
@@ -36,10 +38,14 @@ Left to right, divider 1px `border`:
 
 ## Built from
 
-- `layouts/herdr-t3.json`: `row` root → `sidebar` column [`brand` block `t3-chrome`; `sidebar-lists` stack [`lists` column [`spaces` `t3-spaces`, `agents` `t3-agents`], `focus` `t3-focus` with props `{ "newMenu": "t3-new-menu" }`]; `sidebar-footer` `t3-chrome` with props `{ "footer": true }`] and `work` column [`tabs` `t3-tabs`; `work-body` row [`view` stack, active `main` [`main` `{ "tab": "active", "pane": { "header": { "content": { "mod": "t3-pane" } } } }`, `agent` `{ "agent": "focused" }`]]; `work-bottom-inset`; `status` `workspace-status`, hidden]. Preview: `layouts/herdr-t3.svg`.
-- Mods: `t3-chrome`, `t3-spaces`, `t3-agents`, `t3-focus`, `t3-tabs`, `t3-pane` and `t3-new-menu` are reworked from Herdr's shipped `workspace-chrome`, `spaces`, `agents`, `tabs`, `pane` and `new-menu`; `t3-focus` is new. Shipped mods used as they are: `workspace-status`, `picker`, `menu`, and icons from `mods/workspace-chrome/` and `mods/pane/close.svg`.
+- `layouts/herdr-t3.json`: `row` root → `sidebar` column [`brand` block `t3-chrome`; `sidebar-lists` stack [`lists` column [`spaces` `t3-spaces`, `agents` `t3-agents`], `focus` `t3-focus` with props `{ "newMenu": "t3-new-menu" }`]; `sidebar-footer` `t3-chrome` with props `{ "footer": true }`] and `work` column [`tabs` `t3-tabs`; `work-body` row [`view` stack, active `main` [`main` `{ "tab": "active", "pane": { "header": { "content": { "mod": "t3-pane" } } } }`, `agent` `{ "agent": "focused" }`], `panel` column (initially hidden) [`panel-body` stack, active `files` [`files` mod, `changes` mod]]]; `work-bottom-inset`; `status` `workspace-status`, hidden]. Preview: `layouts/herdr-t3.svg`.
+- Mods: `t3-chrome`, `t3-spaces`, `t3-agents`, `t3-focus`, `t3-tabs`, `t3-pane` and `t3-new-menu` are reworked from Herdr's shipped `workspace-chrome`, `spaces`, `agents`, `tabs`, `pane` and `new-menu`; `t3-focus` is new. Shipped mods used as they are: `workspace-status`, `picker`, `menu`, `files`, `changes`, and icons from `mods/workspace-chrome/` and `mods/pane/close.svg`.
+- `t3-tab-menu` clones shipped `new-menu` (0.1.12) and adds one 31px VS Code row; content height is `min(522, 198 + max(1, choices.length) * 31)`. `open-vscode` is vendored from CacaoRick/herdr-open-vscode under MIT, with source revision in its folder.
+- `keys.json` also binds global `cmd-g` to `mod.open:open-vscode` on macOS (use only `ctrl-shift-g` on Windows/Linux).
 - `keys.json`: `layout:herdr-t3` → `cmd-shift-b`: `t3-chrome.sidebar`, `cmd-shift-a`: `t3-tabs.view`, `cmd-shift-s`: `t3-focus.settle` (reaches Focus only while it shows).
 - Programs: `t3-spaces` runs read-only `git status` / `git rev-parse` (no optional locks, no fsmonitor) and `hc machine ls --json`; `t3-focus` runs `hc label <agent> settled=<ms>:<turn>`.
+
+- `open-vscode` reads its optional `hosts.json`, runs local `code` or an OS opener and queries `hc machine ls --json` for SSH targets; VS Code Remote - SSH makes remote connections. The folder follows `focused().cwd`, with the active space folder as fallback. It shows an error dialog if launching fails.
 
 ## Watch out
 
@@ -54,7 +60,11 @@ Left to right, divider 1px `border`:
 
 ## Done when
 
-- `herdr-app check` passes for every `mods/t3-*` and `layout.switch {"name": "herdr-t3"}` shows the window above.
+- The top-right `+` opens the default menu clone with Open in VS Code and its `cmd-g` hint, returning from agent view to tabs first.
+- Files and Changes open, switch and close the right panel in either view; switching spaces restores each space's panel choice.
+
+- `node --test test/open-vscode-uri.test.mjs` passes; `cmd-g` or the menu opens the focused folder in VS Code.
+- `herdr-app check` passes for `mods/open-vscode` and every `mods/t3-*` and `layout.switch {"name": "herdr-t3"}` shows the window above.
 - `node mods/t3-spaces/check-sidebar.cjs` and `node mods/t3-pane/check-pane.cjs` print their `ok` lines.
 - `cmd-shift-b` switches the sidebar between Spaces + Agents and Focus.
 - `cmd-shift-a` shows one agent; clicking a sidebar card shows that one; splitting a shell there brings the tabs back, focused on the shell.

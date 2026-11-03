@@ -134,6 +134,33 @@
                   "radius": 8
                 }
               ]
+            },
+            {
+              "id": "panel",
+              "type": "column",
+              "hidden": true,
+              "size": { "px": 368 },
+              "min": 280,
+              "max": 900,
+              "children": [
+                {
+                  "id": "panel-body",
+                  "type": "stack",
+                  "active": "files",
+                  "children": [
+                    {
+                      "id": "files",
+                      "type": "block",
+                      "content": { "mod": "files" }
+                    },
+                    {
+                      "id": "changes",
+                      "type": "block",
+                      "content": { "mod": "changes" }
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "padding": [2, 8],

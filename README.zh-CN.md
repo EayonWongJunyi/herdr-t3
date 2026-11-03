@@ -18,11 +18,14 @@
 - **各处同一个名字**：Focus 卡片、agents 列表、标签和窗格标题用同一条规则给终端取名：Pi 会话名，其次是你命名过的标签，再其次是有意义的终端标题，最后是程序名。同一个标签里的两个 Pi 各自显示自己的会话名。
 - **各处同一套状态标记**：工作中转圈，blocked 显示 `!`，done 显示圆点。显示 Focus 时，已 Settle 的 agent 在标签和窗格标题上也不再显示 done 圆点。
 - **窄标签、带框窗格**：28px 胶囊标签；圆角窗格带 28px 标题栏（名字、目录、状态；悬停时出现分屏、缩放、关闭）。
-- **新建**：标签栏的 `+` 直接在当前 space 开终端标签；侧栏的 New tab 先选 space（或新建一个）。不选 agent：在终端里启动。
+- **新建**：标签栏的 `+` 打开 Herdr 默认菜单的副本，提供 Terminal、Open in VS Code、已安装的 agent、New space、New worktree 和 Open worktree。从 Agent 模式打开菜单时会回到标签模式。侧栏的 New tab 仍然先选 space（或新建一个），再打开终端标签。
+- **Files 和 Changes**：右上角按钮打开 Herdr 的文件浏览器或 Git 变更面板，再次点击当前按钮收起。每个 space 分别记住面板选择，标签模式和 Agent 模式均可使用。
 
 ## 安装
 
-让你的 Herdr agent 添加 `herdr.dev/layouts/JinJieBeWater/herdr-t3`。手动安装：把 `layouts/herdr-t3.json`、`layouts/herdr-t3.svg` 和所有 `mods/t3-*` 复制进 `~/.config/herdr-app/`，把 `keys.json` 合并进你自己的。外观和行为见 [RECIPE.zh-CN.md](RECIPE.zh-CN.md)。
+让你的 Herdr agent 添加 `herdr.dev/layouts/JinJieBeWater/herdr-t3`。手动安装：把 `layouts/herdr-t3.json`、`layouts/herdr-t3.svg` 和所有 `mods/t3-*`、`mods/open-vscode/` 复制进 `~/.config/herdr-app/`，把 `keys.json` 合并进你自己的。外观和行为见 [RECIPE.zh-CN.md](RECIPE.zh-CN.md)。
+
+内置 [open-vscode](https://github.com/CacaoRick/herdr-open-vscode)：按 `cmd-g` 或选择 **+ → Open in VS Code**，打开当前终端目录。本机需要 VS Code，远程目录还需要 Remote - SSH。Windows/Linux 请把 `global` 中的 `cmd-g` 换成 `ctrl-shift-g`；只合并当前系统的快捷键，并保留已有绑定。可在已安装的 `mods/open-vscode/hosts.json` 中配置 SSH 别名。
 
 ## 快速上手
 
@@ -41,6 +44,8 @@
 | `cmd-shift-a` | `t3-tabs.view` | 进出 Agent 模式 |
 | `cmd-shift-s` | `t3-focus.settle` | Settle 当前查看的 agent 并跳到下一张卡片，已 Settle 的则取回。只在显示 Focus 时生效；忙着的或置顶的不动 |
 
+内置的 `global` 绑定为 `cmd-g` → `mod.open:open-vscode`。
+
 我自己加在 `global` 里的：
 
 | 快捷键 | 命令 | 作用 |
@@ -55,7 +60,7 @@
 
 Herdr 不会更新别人做的 mod 和布局。再添加一次也不行：安装从不覆盖已有文件，只会装出一份改了名的副本（如 `t3-focus-2`）。更新要靠覆盖：
 
-- 对你的 Herdr agent 说：「从 github.com/JinJieBeWater/herdr-t3 更新 Herdr T3：用仓库最新的文件覆盖我已安装的 `mods/t3-*` 和 `layouts/herdr-t3.*`，然后对每个 mod 跑 `herdr-app check`。」如果首次安装时因为重名改过名字，就覆盖改名后的那份。
+- 对你的 Herdr agent 说：「从 github.com/JinJieBeWater/herdr-t3 更新 Herdr T3：用仓库最新的文件覆盖我已安装的 `mods/t3-*`、`mods/open-vscode/`（保留 `hosts.json`）和 `layouts/herdr-t3.*`，然后对每个 mod 跑 `herdr-app check`。」如果首次安装时因为重名改过名字，就覆盖改名后的那份。
 - 手动更新：把同样的文件复制过去覆盖旧的。mod 保存后自动重载，不用重启。
 - 会保留：置顶、折叠、排序、Settled 收纳区和已 Settle 的 agent。这些存在 `data/`、`shared.json` 和终端标签里，不在 mod 目录中。会丢掉：你自己对被覆盖文件的修改，包括聚焦边框颜色；覆盖布局后重新设置即可。
 - `keys.json` 和可选扩展保持原样；只有提交记录提到它们时，再和仓库对比。带 `!` 的提交会改名（例如 `refactor!: rename the layout and theme to herdr-t3`），按提交里的改名同步调整。
@@ -65,7 +70,9 @@ Herdr 不会更新别人做的 mod 和布局。再添加一次也不行：安装
 - `t3-spaces`：在各 space 的目录里运行只读的 `git status` / `git rev-parse`，监听这些仓库的变化（`watchFolder`），运行 `hc machine ls --json`。
 - `t3-focus`：Settle 或取消 Settle 时运行 `hc label <agent> settled=<ms>:<turn>`。
 
-不发网络请求。
+- `open-vscode`：调用本机 `code` 或系统打开程序（`open`、`xdg-open`、PowerShell）；远程目录还会调用 `hc machine ls --json`，读取可选的 `hosts.json`。远程连接由 Remote - SSH 完成。
+
+这些 mod 自身不发网络请求。
 
 ## 可选扩展
 
@@ -99,7 +106,7 @@ Herdr 不自带 [Maple Mono NF CN](https://github.com/subframe7536/maple-font)�
 
 ## 致谢与许可证
 
-`t3-chrome`、`t3-spaces`、`t3-agents`、`t3-tabs`、`t3-pane`、`t3-new-menu` 和布局本身，分别基于 Herdr App 自带的 `workspace-chrome`、`spaces`、`agents`、`tabs`、`pane`、`new-menu` 和 `main` 修改。Settle 参照 T3 Code 的设计。许可证与 Herdr App 相同，为 Apache-2.0。
+`t3-chrome`、`t3-spaces`、`t3-agents`、`t3-tabs`、`t3-pane`、`t3-new-menu` 和布局本身，分别基于 Herdr App 自带的 `workspace-chrome`、`spaces`、`agents`、`tabs`、`pane`、`new-menu` 和 `main` 修改。Settle 参照 T3 Code 的设计。许可证与 Herdr App 相同，为 Apache-2.0。`t3-tab-menu` 是自带 `new-menu` 的副本，增加了 Open in VS Code 一行。`mods/open-vscode/` 来自 [CacaoRick/herdr-open-vscode](https://github.com/CacaoRick/herdr-open-vscode)，采用 MIT 许可证；目录中保留了许可证和来源版本。
 
 ## 更多
 

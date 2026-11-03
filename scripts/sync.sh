@@ -14,6 +14,8 @@ for m in t3-agents t3-tabs t3-pane; do cp "$src/mods/t3-focus/name.js" "$src/mod
 rsync -a --delete $gen --exclude mod.json "$src/mods/t3-focus/" "$focus/mods/t3-focus/"
 # One mod at a time: other t3-* folders in the app (yours, a test's) are left alone.
 for d in "$src"/mods/t3-*/; do rsync -a --delete $gen "$d" "$app/mods/$(basename "$d")/"; done
+# Keep personal SSH aliases in the installed VS Code mod.
+rsync -a --delete $gen --exclude hosts.json "$src/mods/open-vscode/" "$app/mods/open-vscode/"
 # The theme picker, stack switches and your focus ring color live in the installed layout; keep them across syncs.
 layout="$app/layouts/herdr-t3.json"
 old=$(cat "$layout" 2>/dev/null || echo '{}')

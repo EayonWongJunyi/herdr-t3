@@ -17,12 +17,14 @@ Herdr App 的一个安静、近似 T3 Code 的窗口：左侧 256px 侧栏，可
     - **Focus**：T3 侧栏。需要你的 agent 显示为卡片，底部是折叠的 Working 和 Settled 收纳区。Active 按回到你手上的时间排，Working 按本轮开始时间，Settled 按 Settle 时间，同时间按 address；停止工作的 agent 在 Working 多留 2 秒（blocked 立即离开，置顶或已 Settle 的不留），之后排到 Active 顶部；马上续跑、等你处理后再继续，都不挪位；查看卡片不改变顺序（见 `mods/t3-focus`；[单独 mod 的 recipe](https://github.com/JinJieBeWater/herdr-t3-focus/blob/main/RECIPE.zh-CN.md) 有完整说明）。
   - **底栏**（41px，上边框）：一行 Settings；App 更新就绪时带一个 6px `accent` 圆点。
 - **工作区**：
-  - **标签栏**（40px，可拖动窗口）：当前 space 的标签，28px 胶囊（圆角 6，当前标签 `selected`）：程序图标、名字（没人命名的标签按下面的命名规则显示其中的 agent，没有 agent 就显示当前 pane），工作中显示转圈，blocked 显示 `!` 徽章，done 且未看显示 7px `done` 圆点；当前标签有关闭 `×`。然后是 26px 的视图切换按钮（`square` 图标：只看一个 agent；`layers`：显示标签）和 `+`（`tab.new`：在当前 space 开终端标签）。Agent 模式下胶囊换成一条 agent 栏：程序图标、agent 名（`foreground`）、所在 space（`dim`）、状态标记。Windows 上有窗口按钮。侧栏隐藏时，最左边出现侧栏开关，同时统计 agent：blocked、working、done。
+  - **标签栏**（40px，可拖动窗口）：当前 space 的标签，28px 胶囊（圆角 6，当前标签 `selected`）：程序图标、名字（没人命名的标签按下面的命名规则显示其中的 agent，没有 agent 就显示当前 pane），工作中显示转圈，blocked 显示 `!` 徽章，done 且未看显示 7px `done` 圆点；当前标签有关闭 `×`。然后是 26px 的视图切换按钮（`square` 图标：只看一个 agent；`layers`：显示标签）和 `+`（`t3-tab-menu`，带 Open in VS Code 的默认菜单副本，250×543），右侧接带图标和文字的 Files、Changes 按钮。Agent 模式下胶囊换成一条 agent 栏：程序图标、agent 名（`foreground`）、所在 space（`dim`）、状态标记。Windows 上有窗口按钮。侧栏隐藏时，最左边出现侧栏开关，同时统计 agent：blocked、working、done。
   - **工作主体**（内边距 2/8，间距 8），二选一（stack）：
     - **窗格**，即当前标签：圆角 8，`background` 填充，聚焦边框 2px，默认关闭（`focus.color` 为 `background`，改成 `accent` 即显示；平时的边框也是 2px，颜色同 `background`，所以聚焦时终端不会变尺寸），单个窗格也带框。每个窗格顶部有 28px 标题栏：程序图标、agent 名或终端标题（13px 中粗，聚焦时 `foreground`）、目录、状态标记，以及右分屏、下分屏、缩放/取消缩放、关闭按钮（悬停时出现）。
     - **Agent 模式**：一个 agent 的终端铺满显示，`background` 填充，圆角 8，无标题栏。
   - 底部留 6px；布局里有自带的 `workspace-status` 状态栏，但隐藏。
-- **新建菜单**（`t3-new-menu`，520×420 弹层，位于顶部）：选一个 space 开终端标签（`tab.new`），或 New space（`space.new`）；`⌘1…` 按编号选 space。
+- **右侧面板**：位于标签/Agent 视图旁，可拖动调整宽度；默认 368px，最小 280px、最大 900px，初始隐藏。内部 stack 显示自带的 `files` 或 `changes` mod。按钮遵循共享的 `workspace.panels` 设置（默认两者启用），高亮当前面板，点击可切换或收起；`t3-tabs` 的本地存储按 space 记住选择。
+- **标签栏新建菜单**（`t3-tab-menu`，250×543 弹层）：Herdr 自带菜单的副本，提供 Terminal、Open in VS Code、已安装的 agent、New space、New worktree 和 Open worktree。`+` 会先从 Agent 模式回到标签模式，再打开菜单。
+- **侧栏新建菜单**（`t3-new-menu`，520×420 弹层，位于顶部）：选一个 space 开终端标签（`tab.new`），或 New space（`space.new`）；`⌘1…` 按编号选 space。
 
 ## 它怎么表现
 
@@ -38,10 +40,14 @@ Herdr App 的一个安静、近似 T3 Code 的窗口：左侧 256px 侧栏，可
 
 ## 由什么构成
 
-- `layouts/herdr-t3.json`：根为 `row` → `sidebar` 列 [`brand` 块 `t3-chrome`；`sidebar-lists` stack [`lists` 列 [`spaces` `t3-spaces`、`agents` `t3-agents`]、`focus` `t3-focus`，props `{ "newMenu": "t3-new-menu" }`]；`sidebar-footer` `t3-chrome`，props `{ "footer": true }`]，以及 `work` 列 [`tabs` `t3-tabs`；`work-body` 行 [`view` stack，默认 `main` [`main` `{ "tab": "active", "pane": { "header": { "content": { "mod": "t3-pane" } } } }`、`agent` `{ "agent": "focused" }`]]；`work-bottom-inset`；`status` `workspace-status`，隐藏]。预览图：`layouts/herdr-t3.svg`。
-- Mods：`t3-chrome`、`t3-spaces`、`t3-agents`、`t3-tabs`、`t3-pane`、`t3-new-menu` 分别改自 Herdr 自带的 `workspace-chrome`、`spaces`、`agents`、`tabs`、`pane`、`new-menu`；`t3-focus` 是新写的。原样使用的自带 mod：`workspace-status`、`picker`、`menu`，以及 `mods/workspace-chrome/` 下的图标和 `mods/pane/close.svg`。
+- `layouts/herdr-t3.json`：根为 `row` → `sidebar` 列 [`brand` 块 `t3-chrome`；`sidebar-lists` stack [`lists` 列 [`spaces` `t3-spaces`、`agents` `t3-agents`]、`focus` `t3-focus`，props `{ "newMenu": "t3-new-menu" }`]；`sidebar-footer` `t3-chrome`，props `{ "footer": true }`]，以及 `work` 列 [`tabs` `t3-tabs`；`work-body` 行 [`view` stack，默认 `main` [`main` `{ "tab": "active", "pane": { "header": { "content": { "mod": "t3-pane" } } } }`、`agent` `{ "agent": "focused" }`]、`panel` 列（初始隐藏）[`panel-body` stack，默认 `files` [`files` mod、`changes` mod]]]；`work-bottom-inset`；`status` `workspace-status`，隐藏]。预览图：`layouts/herdr-t3.svg`。
+- Mods：`t3-chrome`、`t3-spaces`、`t3-agents`、`t3-tabs`、`t3-pane`、`t3-new-menu` 分别改自 Herdr 自带的 `workspace-chrome`、`spaces`、`agents`、`tabs`、`pane`、`new-menu`；`t3-focus` 是新写的。原样使用的自带 mod：`workspace-status`、`picker`、`menu`、`files`、`changes`，以及 `mods/workspace-chrome/` 下的图标和 `mods/pane/close.svg`。
+- `t3-tab-menu` 克隆自自带 `new-menu`（0.1.12），增加 31px 的 VS Code 行；内容高度为 `min(522, 198 + max(1, choices.length) * 31)`。`open-vscode` 来自 CacaoRick/herdr-open-vscode，MIT 许可证和来源版本在其目录中。
+- `keys.json` 还提供 macOS 的全局 `cmd-g` → `mod.open:open-vscode`；Windows/Linux 仅使用 `ctrl-shift-g`。菜单显示此快捷键，没有 space 时禁用该行。
 - `keys.json`：`layout:herdr-t3` → `cmd-shift-b`：`t3-chrome.sidebar`，`cmd-shift-a`：`t3-tabs.view`，`cmd-shift-s`：`t3-focus.settle`（只在 Focus 显示时生效）。
 - 运行的程序：`t3-spaces` 运行只读的 `git status` / `git rev-parse`（不加可选锁、不用 fsmonitor）和 `hc machine ls --json`；`t3-focus` 运行 `hc label <agent> settled=<ms>:<turn>`。
+
+- `open-vscode` 读取可选的 `hosts.json`，调用本机 `code` 或系统打开程序，并通过 `hc machine ls --json` 查询 SSH 目标；远程连接由 VS Code Remote - SSH 完成。目录跟随 `focused().cwd`，回退到当前 space 目录。启动失败时显示错误对话框。
 
 ## 注意
 
@@ -56,7 +62,11 @@ Herdr App 的一个安静、近似 T3 Code 的窗口：左侧 256px 侧栏，可
 
 ## 完成标准
 
-- 每个 `mods/t3-*` 都通过 `herdr-app check`，`layout.switch {"name": "herdr-t3"}` 显示上面描述的窗口。
+- 右上角 `+` 打开带 Open in VS Code 和 `cmd-g` 提示的默认菜单副本；在 Agent 模式下会先返回标签模式。
+- Files、Changes 在两种视图中都能打开、切换和收起右侧面板；切换 space 时恢复各自的面板选择。
+
+- `node --test test/open-vscode-uri.test.mjs` 通过；`cmd-g` 或菜单能在 VS Code 中打开当前终端目录。
+- `mods/open-vscode` 和每个 `mods/t3-*` 都通过 `herdr-app check`，`layout.switch {"name": "herdr-t3"}` 显示上面描述的窗口。
 - `node mods/t3-spaces/check-sidebar.cjs` 和 `node mods/t3-pane/check-pane.cjs` 输出各自的通过行。
 - `cmd-shift-b` 在 Spaces + Agents 和 Focus 之间切换侧栏。
 - `cmd-shift-a` 只显示一个 agent；点侧栏卡片就显示那个；在其中分出一个 shell，会退回标签模式并聚焦到这个 shell。
