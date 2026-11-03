@@ -18,7 +18,7 @@ Only want the Settle sidebar? It is also published alone: [herdr-t3-focus](https
 - **One name everywhere**: Focus cards, the agents list, tabs and pane headers name a terminal the same way: its Pi session, then a tab you named, then a telling terminal title, else the program. Two Pis in one tab read as their own sessions.
 - **The same status marks everywhere**: a spinner while working, `!` when blocked, a dot when done. While Focus shows, a settled agent's done dot leaves the tabs and pane headers too.
 - **Slim tabs, framed panes**: 28px pill tabs; rounded panes with a 28px header (name, folder, status; split, zoom and close on hover).
-- **New menu** (`+`): pick a space (or a new one), then a terminal or any installed agent.
+- **New**: the tab bar's `+` opens a terminal tab in the current space; the sidebar's New tab picks a space (or a new one) first. No agent picker: start agents in the terminal.
 
 ## Install
 
@@ -64,7 +64,6 @@ Herdr doesn't update mods or layouts from others, and adding this again would in
 
 - `t3-spaces`: read-only `git status` / `git rev-parse` in your spaces' folders, watches those repos for changes (`watchFolder`), and `hc machine ls --json`.
 - `t3-focus`: `hc label <agent> settled=<ms>:<turn>` when an agent is settled or unsettled.
-- `t3-new-menu`: asks Herdr which agents are installed (`knownAgents`).
 
 No network requests.
 

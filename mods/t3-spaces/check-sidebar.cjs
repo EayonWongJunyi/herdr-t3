@@ -673,10 +673,12 @@ for (const width of [208, 240, 256, 320, 480]) {
   assert.equal(f.calls.length, 0, "only changes act");
   f.panes().splice(-3); delete f.shown.pane; delete f.shown.space;
 
-  // The + menu leaves the agent view before starting anything.
-  const menu = f.load("t3-new-menu"); menu.target = f.spaces()[0]; f.calls.length = 0;
-  menu.start(null);
-  assert.deepEqual(f.calls[0], ["layout.select", { stack: "view", child: "main" }], "+ leaves the agent view first");
+  // New leaves the agent view, then opens a terminal tab in the space picked: no agent step.
+  const menu = f.load("t3-new-menu"); f.calls.length = 0;
+  menu.choose(f.spaces()[0]);
+  assert.deepEqual(f.calls.splice(0), [["layout.select", { stack: "view", child: "main" }], ["tab.new", { space: f.spaces()[0].id }]], "New leaves the agent view and opens a tab");
+  menu.choose(menu.items().find(s => s.id === "new"));
+  assert.deepEqual(f.calls.pop(), ["space.new", {}], "New space opens a space");
   f.calls.length = 0;
   delete f.slots.view;
   assert.equal(find(root, "sidebar-toggle"), null, "with the sidebar shown its own header has the toggle");
@@ -715,7 +717,7 @@ for (const width of [208, 240, 256, 320, 480]) {
   fire(find(root, "tab-other"), "on_mouse_down:right", {}, cx);
   assert.equal(f.overlays.pop().props.target.id, "other");
   fire(find(root, "tab-new"), "on_click", {}, cx);
-  assert.deepEqual(f.calls.pop(), ["mod.open", { name: "t3-new-menu" }]);
+  assert.deepEqual(f.calls.pop(), ["tab.new", {}], "the tab bar's + opens a tab in its space");
   fire(find(root, "close-b0"), "on_click", {}, cx);
   assert.deepEqual(f.calls.pop(), ["tab.close", { id: "b0" }]);
   const pane = f.load("t3-pane", { pane: "p0" });

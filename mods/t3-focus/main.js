@@ -629,7 +629,7 @@ export default class Focus extends View {
       .child(filter)
       .child(tool("focus-new-space", "New space", "folder-plus", () => run("space.new")))
       // The layout passes its own menu; docked alone, the shipped one.
-      .child(tool("focus-new-agent", "New agent", "square-pen", () => run("mod.open", { name: props()?.newMenu ?? "new-menu" })));
+      .child(tool("focus-new-tab", "New tab", "square-pen", () => run("mod.open", { name: props()?.newMenu ?? "new-menu" })));
 
     return v_flex().id("t3-focus-root").relative().size_full().min_h(0).bg(t.chrome).text_size(13)
       .on_size_change((size) => { this.height = size.height; this.width = size.width; })
