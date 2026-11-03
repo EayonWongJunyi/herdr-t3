@@ -84,9 +84,10 @@ function fixture(width) {
     stores.set(name, storage);
     const localStorage = { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value) };
     const read = file => fs.readFileSync(path.join(modRoot, name, file), "utf8");
-    // name.js, the shared naming rule, is inlined as the mod's own copy is.
-    const source = ((fs.existsSync(path.join(modRoot, name, "name.js")) ? read("name.js") + "\n" : "") + read("main.js"))
-      .replace(/^import .*;\r?\n/gm, "").replace(/export function /g, "function ")
+    // name.js and tree.js, the shared naming and status rules, are inlined as the mod's own copies are.
+    const shared = ["name.js", "tree.js"].filter(f => fs.existsSync(path.join(modRoot, name, f))).map(f => read(f) + "\n").join("");
+    const source = (shared + read("main.js"))
+      .replace(/^import .*;\r?\n/gm, "").replace(/export (function|const) /g, "$1 ")
       .replace("export default class", "globalThis.Mod = class");
     const context = vm.createContext({ ...env, localStorage, props: () => props, fs: fs.promises, appHome: () => path.dirname(modRoot) });
     vm.runInContext(source, context, { filename: name });
@@ -376,16 +377,28 @@ for (const width of [208, 240, 256, 320, 480]) {
   assert.deepEqual(f.calls.pop(), ["layout.select", { stack: "sidebar-lists", child: "focus" }]);
   f.slots["sidebar-lists"] = { id: "sidebar-lists", active: "focus" };
   f.spaces()[0].tabs[0].status = "done"; f.agents()[0].status = "done";
+  for (const k of f.terminals()) if (k.parent) k.status = "idle";
   f.terminals().find(c => c.address === "t0").labels = { settled: "1:0" };
   assert.equal(find(f.load("t3-tabs").render(cx), "tab-b0").items.some(n => n.style.rounded_full), false, "no done dot for a settled agent's tab");
 }
 
 {
-  // A parent waiting on its sub-agents says how long the longest-working one has worked.
+  // A parent's unread reply shows first, its working sub-agents beside it; once read, waiting on them is
+  // working, everywhere, for as long as the longest-working one has worked.
   const f = fixture(256), fo = f.load("t3-focus");
   f.agents()[0].status = "idle"; f.terminals().find(c => c.address === "child").status = "idle";
   f.terminals().find(c => c.address === "grandchild").status_ms = Date.now() - 90000;
   assert.deepEqual(strings(find(fo.render(cx), "state-t0")), ["Working", "1m"], "the waiting parent shows its sub-agent's working time");
+  f.agents()[0].status = "done"; f.panes()[0].status = "done";
+  const focus = fo.render(cx);
+  assert.ok(strings(find(focus, "state-t0")).includes("Done") && strings(focus).includes("1 sub-agent working"), "an unread reply isn't hidden by a working sub-agent");
+  assert.equal(find(f.load("t3-agents").render(cx), "status-t0").style.accessibility_label, "Done");
+  assert.ok(find(f.load("t3-tabs").render(cx), "tab-b0").items.some(n => n.style.rounded_full), "its tab shows the done dot");
+  f.agents()[0].status = "idle"; f.panes()[0].status = "idle";
+  assert.deepEqual(strings(find(fo.render(cx), "state-t0")), ["Working", "1m"], "read, the run goes on from its start");
+  assert.equal(find(f.load("t3-agents").render(cx), "status-t0").style.accessibility_label, "Working (sub-agent)", "a read parent waiting on a sub-agent is working");
+  const spins = tree => walk(tree).some(n => n.source === "mods/workspace-chrome/spinner.svg");
+  assert.ok(spins(find(f.load("t3-tabs").render(cx), "tab-b0")) && spins(f.load("t3-pane", { pane: "p0" }).render(cx)), "its tab and pane header show it working");
 }
 
 {
@@ -671,8 +684,9 @@ for (const width of [208, 240, 256, 320, 480]) {
   const bare = tabs.render(cx);
   assert.deepEqual(bare.items.slice(0, 2).map(n => n.key), ["sidebar-toggle", "tab-scroll"], "hidden, the toggle sits first, after the window buttons");
   const toggle = find(bare, "sidebar-toggle");
-  assert.deepEqual(toggle.items.slice(1).map(n => [n.key, strings(n)]), [["agents-blocked", ["!", "1"]], ["agents-working", ["1"]]], "hidden, the toggle sums up agents most urgent first, idle left out");
-  assert.equal(toggle.style.accessibility_label, "Show sidebar, 1 need you · 1 working");
+  // t0 works, but its sub-agent is stuck: it needs the person too.
+  assert.deepEqual(toggle.items.slice(1).map(n => [n.key, strings(n)]), [["agents-blocked", ["!", "2"]]], "hidden, the toggle sums up agents most urgent first, idle left out");
+  assert.equal(toggle.style.accessibility_label, "Show sidebar, 2 need you");
   assert.equal(walk(tabs.render(cx)).concat(walk(f.load("t3-agents").render(cx)), walk(f.load("t3-spaces").render(cx)), walk(f.load("t3-chrome").render(cx)), walk(f.load("t3-pane", { pane: "p0" }).render(cx))).filter(n => "tooltip" in n.style).length, 0, "no hover tooltips");
   {
     // One look across the preset: the same "needs you" mark everywhere, no scrollbars, English throughout.
@@ -689,6 +703,7 @@ for (const width of [208, 240, 256, 320, 480]) {
   }
   const saved = f.agents().map(a => a.status);
   f.agents().forEach(a => { a.status = "idle"; });
+  for (const k of f.terminals()) if (k.parent) k.status = "idle";
   assert.deepEqual(find(tabs.render(cx), "sidebar-toggle").items.length, 1, "with nothing to report it is just the icon");
   f.agents().forEach((a, i) => { a.status = saved[i]; });
   fire(find(bare, "sidebar-toggle"), "on_click", {}, cx);
@@ -708,8 +723,7 @@ for (const width of [208, 240, 256, 320, 480]) {
   const head = pane.render(cx);
   const spinner = tree => walk(tree).find(n => n.source === "mods/workspace-chrome/spinner.svg");
   const open = f.load("t3-agents");
-  open.toggleFold("t0", cx); // folded, the row would show its stuck sub-agent instead
-  for (const tree of [root, head, open.render(cx)]) assert.equal(spinner(tree).style.text_color, f.theme().working);
+  for (const tree of [tabs.render(cx), head, open.render(cx)]) assert.equal(spinner(tree).style.text_color, f.theme().working);
   for (const id of ["ph-r-p0", "ph-d-p0", "ph-z-p0", "ph-x-p0"]) assert.equal(find(head, id).style.size, 26);
   const actions = walk(head).find(n => n.items.some(child => child?.key === "ph-r-p0"));
   assert.equal(actions.style.gap, 4);

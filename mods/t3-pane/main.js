@@ -6,8 +6,9 @@
 
 import { View, div, svg, image } from "gpui-kit";
 import { h_flex } from "gpui-base";
-import { panes, terminals, props, run, theme, home, layout } from "herdr";
+import { panes, terminals, agents, props, run, theme, home, layout } from "herdr";
 import { namer } from "./name.js";
+import { subAgents, treeStatus } from "./tree.js";
 
 function icon(p, size, color) {
   if (!p?.icon) return null;
@@ -55,7 +56,8 @@ export default class Pane extends View {
     if (!p) return div();
     const name = namer()(p);
     const pic = icon(p.program, 14, t.muted);
-    const st = p.status;
+    // Its agent with the sub-agents it started (tree.js).
+    const st = treeStatus(p.status, subAgents(agents(), terminals())(p.terminal));
     const pane = p.pane;
     // The rounded frame paints the background; rectangular child fills would cover its corners.
     return h_flex()

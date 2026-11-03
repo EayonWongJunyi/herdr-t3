@@ -2,6 +2,7 @@ import { View, div, svg, image } from "gpui-kit";
 import { h_flex } from "gpui-base";
 import { spaces, panes, agents, terminals, focused, run, openOverlay, theme, window, layout, settings, nextCommand } from "herdr";
 import { namer } from "./name.js";
+import { subAgents, treeStatus } from "./tree.js";
 
 // With the focus list showing (t3-focus), an agent settled there isn't news: its done is left out.
 // One that works or gets stuck is unsettled there, so only done needs leaving out.
@@ -44,9 +45,8 @@ export default class Tabs extends View {
 
   // With the sidebar hidden, its toggle also says how the agents are doing, with the sidebar's own marks.
   // Idle agents aren't counted: nothing to look at.
-  sidebarToggle(t, stop) {
-    const list = awake();
-    const counts = ["blocked", "working", "done"].map(s => [s, list.filter(a => a.status === s).length]).filter(([, n]) => n > 0);
+  sidebarToggle(t, stop, live, st) {
+    const counts = ["blocked", "working", "done"].map(s => [s, live.filter(a => st(a) === s).length]).filter(([, n]) => n > 0);
     const words = { blocked: "need you", working: "working", done: "done" };
     const summary = counts.map(([s, n]) => `${n} ${words[s]}`).join(" · ");
     return h_flex().id("sidebar-toggle").h(26).px(6).gap(8).flex_none().items_center().rounded(6)
@@ -58,17 +58,18 @@ export default class Tabs extends View {
   }
 
   // In the agent view tabs mean nothing: the bar names the agent shown instead.
-  agentBar(t, title, live) {
+  agentBar(t, title, live, st) {
     const shown = focused()?.agent;
     const a = agents().find(x => x.address === shown);
     if (!a) return div().id("agent-bar").flex_1().px(8).text_size(13).text_color(t.dim).child("No agent");
     const p = a.program;
-    const news = a.status !== "done" || live.some(x => x.address === a.address);
+    const s = st(a);
+    const news = s !== "done" || live.some(x => x.address === a.address);
     return h_flex().id("agent-bar").flex_1().min_w(0).h(28).px(8).gap(8).items_center().text_size(13)
       .when(Boolean(p?.icon), el => el.child(p.tint ? svg(p.icon).size(14).text_color(t.muted) : image(p.icon).size(14)))
       .child(div().flex_none().max_w(320).truncate().text_color(t.foreground).child(title(a)))
       .child(div().flex_1().min_w(0).truncate().text_color(t.dim).child(a.space_name ?? ""))
-      .when(["working", "blocked", "done"].includes(a.status) && news, el => el.child(mark(t, a.status)));
+      .when(["working", "blocked", "done"].includes(s) && news, el => el.child(mark(t, s)));
   }
 
   render() {
@@ -76,6 +77,9 @@ export default class Tabs extends View {
     const space = spaces().find(p => p.active);
     const shown = space?.tabs ?? [];
     const live = awake();
+    // Each agent with its sub-agents (tree.js).
+    const every = agents(), under = subAgents(every, terminals());
+    const st = (a) => treeStatus(a.status, under(a.address));
     const ps = panes(), title = namer();
     // The agent view keeps the keyboard on its agent, so a split or new tab would land unseen.
     // A new shell or mod pane in this space brings the tabs back, focused; a new agent's (often an agent
@@ -103,6 +107,11 @@ export default class Tabs extends View {
       const lead = mine.find(p => p.status != null) ?? mine.find(p => p.focused) ?? mine[0];
       const program = lead?.program;
       const name = c.named ? c.name : lead ? title(lead) : "Terminal";
+      // The tab's most urgent agent, ranked as the app ranks tabs; a done one only while it's still news.
+      const words = every.filter(a => a.tab === c.id).map(st);
+      const status = words.includes("blocked") ? "blocked"
+        : live.some(a => a.tab === c.id && st(a) === "done") ? "done"
+        : words.includes("working") ? "working" : null;
       return h_flex().id(`tab-${c.id}`).h(28).px(8).gap(8).rounded(6).items_center().flex_none().text_size(13)
         .bg(c.active ? t.selected : t.chrome).text_color(c.active ? t.foreground : t.muted)
         .when(!c.active, el => el.hover(s => s.bg(t.hover)))
@@ -115,9 +124,7 @@ export default class Tabs extends View {
         .on_mouse_down("right", (_e, cx) => { cx.stop_propagation(); openOverlay({ mod: "menu", kind: "popup", width: 200, props: { tab: "tab", target: { id: c.id, space: space.id } } }); })
         .when(Boolean(program?.icon), el => el.child(program.tint ? svg(program.icon).size(14).text_color(t.muted) : image(program.icon).size(14)))
         .child(div().max_w(170).truncate().child(c.zoomed ? `${name} Z` : name))
-        .when(c.status === "working", el => el.child(svg("mods/workspace-chrome/spinner.svg").size(12).flex_none().text_color(t.working).spin(900)))
-        .when(c.status === "blocked", el => el.child(blockedMark(t)))
-        .when(c.status === "done" && live.some(a => a.tab === c.id && a.status === "done"), el => el.child(div().size(7).flex_none().rounded_full().bg(t.done)))
+        .when(status != null, el => el.child(mark(t, status)))
         .when(c.active, el => el.child(div().id(`close-${c.id}`).text_color(t.dim).on_mouse_down("left", stop).on_click((_e, cx) => { cx.stop_propagation(); run("tab.close", { id: c.id }); }).child(svg("mods/pane/close.svg").size(12))));
     };
     const root = layout(), sidebar = find(root, "sidebar"), w = window();
@@ -128,8 +135,8 @@ export default class Tabs extends View {
     return h_flex().size_full().min_w(0).px(8).pl(lightsPadding).gap(4).items_center().bg(t.chrome)
       .on_mouse_up("left", () => { this.pressed = null; })
       .on_scroll_wheel(e => { if (Math.abs(e.delta.y) >= 1) run(e.delta.y > 0 ? (agentView() ? "agent.prev" : "tab.prev") : (agentView() ? "agent.next" : "tab.next")); })
-      .when(Boolean(sidebar?.hidden), el => el.child(this.sidebarToggle(t, stop)))
-      .child(agentView() ? this.agentBar(t, title, live)
+      .when(Boolean(sidebar?.hidden), el => el.child(this.sidebarToggle(t, stop, live, st)))
+      .child(agentView() ? this.agentBar(t, title, live, st)
         : h_flex().id("tab-scroll").flex_1().min_w(0).h_full().items_center().gap(4).overflow_x_scroll().children(shown.map(item)))
       .when(Boolean(find(root, "view")), el => el.child(button("view-toggle", svg(`mods/workspace-chrome/${agentView() ? "layers" : "square"}.svg`).size(14), switchView)
         .role("button").accessibility_label(agentView() ? "Show tabs" : "Show one agent")))

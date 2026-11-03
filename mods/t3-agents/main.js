@@ -1,17 +1,12 @@
-// Agents in grouped or priority views; parents take their most urgent sub-agent's place.
+// Agents in grouped or priority views; a parent reads with its sub-agents (tree.js).
 // A viewed done agent stays in Done until left.
 
 import { View, div, image, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
 import { agents, terminals, focused, run, theme, shared, setShared, setAgentOrder, openOverlay, closeOverlay, props, layout } from "herdr";
 import { namer } from "./name.js";
+import { kidStatus, subAgents, treeStatus } from "./tree.js";
 const RANK = { blocked: 4, done: 3, working: 2, idle: 1 };
-// A sub-agent without a pane isn't in agents(): its raw word, error counting as
-// blocked. It's never done: it reports to its parent, and the parent's done is the news.
-const kidStatus = (k, listed) => {
-  const s = listed.get(k.address) ?? k.status;
-  return s === "error" ? "blocked" : s === "done" ? "idle" : s;
-};
 const SORTS = [
   { id: "priority", label: "Priority", icon: "clock" },
   { id: "grouped", label: "Grouped by space", icon: "layers" },
@@ -108,9 +103,9 @@ export default class Agents extends View {
     if (!same || cur.status !== "idle") this.held = cur ? { address: cur.address, rank: RANK[cur.status] ?? 0 } : null;
   }
 
-  rank(a) {
+  word(a) {
     const sawDone = a.address === this.held?.address && this.held.rank === RANK.done && a.status === "idle";
-    return sawDone ? RANK.done : RANK[a.status] ?? 0;
+    return sawDone ? "done" : a.status;
   }
 
   sortMenu(t) {
@@ -214,7 +209,11 @@ export default class Agents extends View {
     this.track(list, now);
     this.hold(list);
     const byPriority = sort.id === "priority";
-    const urgency = new Map(list.map((a) => [a.address, Math.max(this.rank(a), ...this.tree(all, a.address).map((s) => RANK[kidStatus(s.t, this.listed)] ?? 0))]));
+    const under = subAgents(list, all);
+    const kidsOf = new Map(list.map((a) => [a.address, under(a.address)]));
+    // As shown: its own word with its sub-agents'. Sorted, a viewed done agent keeps Done.
+    const shownStatus = (a) => treeStatus(a.status, kidsOf.get(a.address));
+    const urgency = new Map(list.map((a) => [a.address, RANK[treeStatus(this.word(a), kidsOf.get(a.address))] ?? 0]));
     const rankOf = (a) => urgency.get(a.address);
     if (byPriority) list = [...list].sort((x, y) => rankOf(y) - rankOf(x) || this.since(y) - this.since(x) || y.seq - x.seq);
     this.prune(all);
@@ -281,7 +280,8 @@ export default class Agents extends View {
       const more = detail.get(a.address);
       // An agent on another machine (`vps/t7`) says which.
       const machine = a.address.includes("/") ? a.address.split("/")[0] : null;
-      const idle = a.status === "idle" && !a.focused;
+      const st = shownStatus(a);
+      const idle = st === "idle" && !a.focused;
       const isPinned = this.pins.includes(a.address);
       // Shown on hover in the time's slot, as in the shipped list; the status stays.
       const pin = div().id(`pin-${a.address}`).role("button")
@@ -302,10 +302,8 @@ export default class Agents extends View {
       const full = byPriority || isPinned;
       const name = full ? more ?? (a.space_name || label(a)) : more ?? (/^\d+$/.test(label(a)) ? a.program?.name || label(a) : label(a));
       const where = full && more && a.space_name && a.space_name !== more ? a.space_name : null;
-      // Folded, the status shows a hidden child when it's more urgent than the agent itself.
-      const folded = subs.length > 0 && this.isFolded(a.address);
-      const kid = folded ? subs.map((s) => kidStatus(s.t, this.listed)).reduce((m, s) => ((RANK[s] ?? 0) > (RANK[m] ?? 0) ? s : m)) : null;
-      const fromKid = (RANK[kid] ?? 0) > (RANK[a.status] ?? 0);
+      // Its sub-agents' word, when it isn't its own, is marked as theirs.
+      const fromKid = st !== a.status;
       const when = this.since(a);
       return h_flex()
         .id(`ag-${a.address}`)
@@ -341,7 +339,7 @@ export default class Agents extends View {
           // The time and the pin share one slot at least the pin's width, so hovering moves nothing else.
           .child(this.hovered === a.address ? pin
             : h_flex().id(`when-${a.address}`).min_w(20).flex_none().justify_end().text_size(11).text_color(t.dim).when(Boolean(when), el => el.child(duration(now - when))))
-          .child(this.status(t, fromKid ? { status: kid } : a, fromKid ? " (sub-agent)" : "").id(`status-${a.address}`)));
+          .child(this.status(t, { status: st }, fromKid ? " (sub-agent)" : "").id(`status-${a.address}`)));
     };
 
     // Groups in list order: spaces (grouped) or priority sections. Agents of a
@@ -359,7 +357,7 @@ export default class Agents extends View {
     const header = (g, i) => {
       const initial = g.id === "sec-1";
       const open = !this.isFolded(g.id, initial);
-      const top = g.members.reduce((m, a) => ((RANK[a.status] ?? 0) > (RANK[m] ?? 0) ? a.status : m), null);
+      const top = g.members.map(shownStatus).reduce((m, s) => ((RANK[s] ?? 0) > (RANK[m] ?? 0) ? s : m), null);
       return h_flex()
         .id(g.id)
         .px(8)

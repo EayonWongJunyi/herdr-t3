@@ -7,8 +7,8 @@ focus=${HERDR_T3_FOCUS:-$src/../herdr-t3-focus}
 app=${HERDR_APP_HOME:-$HOME/.config/herdr-app}
 gen="--exclude gpui-kit.d.ts --exclude jsconfig.json"
 
-# t3-focus/name.js is the one naming rule; a mod can't import outside its folder, so each gets a copy.
-for m in t3-agents t3-tabs t3-pane; do cp "$src/mods/t3-focus/name.js" "$src/mods/$m/"; done
+# t3-focus/name.js and tree.js are the one naming and status rules; a mod can't import outside its folder, so each gets a copy.
+for m in t3-agents t3-tabs t3-pane; do cp "$src/mods/t3-focus/name.js" "$src/mods/t3-focus/tree.js" "$src/mods/$m/"; done
 
 # mod.json stays per repo: here the layout places it ("none"), alone it docks left.
 rsync -a --delete $gen --exclude mod.json "$src/mods/t3-focus/" "$focus/mods/t3-focus/"
