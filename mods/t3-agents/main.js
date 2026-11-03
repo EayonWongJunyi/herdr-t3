@@ -257,7 +257,7 @@ export default class Agents extends View {
         .text_size(11)
         .role("button").accessibility_label(open ? "Collapse sub-agents" : "Expand sub-agents")
         .text_color(lit(id))
-        .hover((s) => s.bg(t.hover)).on_hover(glow(id))
+        .on_hover(glow(id))
         .on_click((_e, cx) => {
           cx.stop_propagation();
           this.toggleFold(a.address, cx);
@@ -288,7 +288,7 @@ export default class Agents extends View {
         .size(20).flex_none().flex().items_center().justify_center()
         .rounded(4)
         .accessibility_label(isPinned ? "Unpin" : "Pin")
-        .hover(s => s.bg(t.hover)).on_hover(glow(`pin-${a.address}`))
+        .on_hover(glow(`pin-${a.address}`))
         .on_click((_e, cx) => {
           cx.stop_propagation();
           // Reordering can move the row without a pointer-leave event.
