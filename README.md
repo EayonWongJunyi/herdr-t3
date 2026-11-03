@@ -104,6 +104,18 @@ Not part of the layout and not copied by an install; add them by hand if you wan
 
 Herdr doesn't ship [Maple Mono NF CN](https://github.com/subframe7536/maple-font): install it, or leave the font lines out to keep Herdr's JetBrains Mono and Geist.
 
+### Catppuccin Latte
+
+`extras/themes/catppuccin-latte.json` adds a light theme for terminals and panels, using the [official Latte palette](https://catppuccin.com/palette/#latte) and [Catppuccin's Alacritty ANSI colors](https://github.com/catppuccin/alacritty/blob/main/catppuccin-latte.toml). Selection uses Surface 0 to keep selected text readable.
+
+Copy it into `~/.config/herdr-app/themes/`, then choose **Settings → Theme → Light → catppuccin latte** and set **Appearance → Light** to use it immediately. It is available in every layout. From the CLI, `herdr-app do app.theme --name catppuccin-latte` selects it for the current layout's light appearance; `"appearance": "light"` in `settings.json` enables light appearance. `scripts/sync.sh` also copies this theme to the local app.
+
+### Maple Light
+
+`extras/themes/maple-light.json` adapts [subframe7536's Maple Light](https://github.com/subframe7536/vscode-theme-maple/blob/2970814e9434e929e658a00c68b251833ba68cf6/themes/maple-light-color-theme.json): warm white backgrounds, slate text and sage accents. Terminal colors follow the original except ANSI white and bright white, which use its dark text colors for readability on a light background. The translucent border is flattened against the sidebar background for Herdr's RGB format.
+
+Copy it and `extras/themes/maple-light.LICENSE` into `~/.config/herdr-app/themes/`, then select **Settings → Theme → Light → maple light**, or run `herdr-app do app.theme --name maple-light`. Set **Appearance → Light** to use it immediately. `scripts/sync.sh` copies both files. The upstream MIT license is retained in `maple-light.LICENSE`.
+
 ## Credits and license
 
 `t3-chrome`, `t3-spaces`, `t3-agents`, `t3-tabs`, `t3-pane`, `t3-new-menu` and the layout start from Herdr App's shipped `workspace-chrome`, `spaces`, `agents`, `tabs`, `pane`, `new-menu` and `main`. Settle follows T3 Code's design. Apache-2.0, as Herdr App. `t3-tab-menu` is a clone of the shipped `new-menu` with an Open in VS Code row. `mods/open-vscode/` comes from [CacaoRick/herdr-open-vscode](https://github.com/CacaoRick/herdr-open-vscode) under MIT; its license and source revision are included in that folder.

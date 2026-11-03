@@ -104,6 +104,18 @@ Herdr 不会更新别人做的 mod 和布局。再添加一次也不行：安装
 
 Herdr 不自带 [Maple Mono NF CN](https://github.com/subframe7536/maple-font)：先安装它，或者删掉字体这几行，沿用 Herdr 的 JetBrains Mono 和 Geist。
 
+### Catppuccin Latte
+
+`extras/themes/catppuccin-latte.json` 为终端和面板提供浅色主题，采用 [Latte 官方色板](https://catppuccin.com/palette/#latte) 和 [Catppuccin 的 Alacritty ANSI 配色](https://github.com/catppuccin/alacritty/blob/main/catppuccin-latte.toml)。选区使用 Surface 0，保证选中文字清晰可读。
+
+复制到 `~/.config/herdr-app/themes/`，然后在 **Settings → Theme → Light** 中选择 **catppuccin latte**，把 **Appearance** 设为 **Light** 即可立即启用。它适用于所有布局。也可以运行 `herdr-app do app.theme --name catppuccin-latte`，为当前布局选择浅色主题，再在 `settings.json` 中设置 `"appearance": "light"`。`scripts/sync.sh` 也会把这个主题复制到本机应用。
+
+### Maple Light
+
+`extras/themes/maple-light.json` 移植自 [subframe7536 的 Maple Light](https://github.com/subframe7536/vscode-theme-maple/blob/2970814e9434e929e658a00c68b251833ba68cf6/themes/maple-light-color-theme.json)，采用暖白背景、深灰蓝文字和灰绿强调色。终端配色沿用原主题，其中 ANSI 白色和亮白色改用原主题的深色文字色，保证浅色背景上的可读性；半透明边框与侧栏背景混合后转为 Herdr 支持的 RGB 颜色。
+
+把它和 `extras/themes/maple-light.LICENSE` 复制到 `~/.config/herdr-app/themes/`，然后在 **Settings → Theme → Light** 中选择 **maple light**，也可以运行 `herdr-app do app.theme --name maple-light`。把 **Appearance** 设为 **Light** 即可立即启用。`scripts/sync.sh` 会复制这两个文件；`maple-light.LICENSE` 保留上游 MIT 许可证。
+
 ## 致谢与许可证
 
 `t3-chrome`、`t3-spaces`、`t3-agents`、`t3-tabs`、`t3-pane`、`t3-new-menu` 和布局本身，分别基于 Herdr App 自带的 `workspace-chrome`、`spaces`、`agents`、`tabs`、`pane`、`new-menu` 和 `main` 修改。Settle 参照 T3 Code 的设计。许可证与 Herdr App 相同，为 Apache-2.0。`t3-tab-menu` 是自带 `new-menu` 的副本，增加了 Open in VS Code 一行。`mods/open-vscode/` 来自 [CacaoRick/herdr-open-vscode](https://github.com/CacaoRick/herdr-open-vscode)，采用 MIT 许可证；目录中保留了许可证和来源版本。

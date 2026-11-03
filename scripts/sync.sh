@@ -26,4 +26,4 @@ jq --argjson old "$old" '[$old | .. | objects | .focus? | objects | .color][0] a
   | (.. | objects | select((.id | strings) and $active[.id])) |= (.active = $active[.id])
   | (.. | objects | .focus? | objects | .color) |= ($c // .)' "$layout" > "$layout.tmp"
 mv "$layout.tmp" "$layout"
-cp "$src/extras/themes/herdr-t3.json" "$app/themes/"
+cp "$src"/extras/themes/*.json "$src"/extras/themes/*.LICENSE "$app/themes/"
